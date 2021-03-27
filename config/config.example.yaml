@@ -1,0 +1,17 @@
+# MQTT client config
+mqtt-server: tcp://mosquitto:1883
+mqtt-clientID: mqtt_edge
+mqtt-username: user
+mqtt-password: password
+
+# MQTT topics  for webRTC signaling config
+topic-offer: /edge/livestream/signal/offer
+topic-answer: /edge/livestream/signal/answer
+
+# WebRTC config
+ice-server: stun:stun.l.google.com:19302
+
+# WebSocket config
+ws-host: 0.0.0.0
+ws-port: 8080
+ws-path: /ws/webrtc
