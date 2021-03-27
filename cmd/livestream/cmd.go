@@ -1,0 +1,217 @@
+package livestream
+
+import (
+	"context"
+	"time"
+
+	"github.com/SB-IM/logging"
+	mqttclient "github.com/SB-IM/mqtt-client"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"github.com/urfave/cli/v2"
+	"github.com/urfave/cli/v2/altsrc"
+
+	"github.com/SB-IM/sphinx/internal/livestream"
+)
+
+// Command returns a livestream command.
+func Command() *cli.Command {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var (
+		logger zerolog.Logger
+
+		mc mqtt.Client
+
+		mqttConfigOptions   mqttclient.ConfigOptions
+		topicConfigOptions  livestream.TopicConfigOptions
+		webRTCConfigOptions livestream.WebRTCConfigOptions
+		rtpConfigOptions    livestream.RTPSourceConfigOptions
+		rtspConfigOptions   livestream.RTSPSourceConfigOptions
+	)
+
+	flags := func() (flags []cli.Flag) {
+		for _, v := range [][]cli.Flag{
+			loadConfigFlag(),
+			mqttFlags(&mqttConfigOptions),
+			topicFlags(&topicConfigOptions),
+			webRTCFlags(&webRTCConfigOptions),
+			rtpFlags(&rtpConfigOptions),
+			rtspFlags(&rtspConfigOptions),
+		} {
+			flags = append(flags, v...)
+		}
+		return
+	}()
+
+	return &cli.Command{
+		Name:  "livestream",
+		Usage: "livestream publishes live stream from edge to cloud",
+		Flags: flags,
+		Before: func(c *cli.Context) error {
+			if err := altsrc.InitInputSourceWithContext(
+				flags,
+				altsrc.NewYamlSourceFromFlagFunc("config"),
+			)(c); err != nil {
+				return err
+			}
+
+			// Set up logger.
+			debug := c.Bool("debug")
+			logging.SetDebugMod(debug)
+			logger = log.With().Str("service", "sphinx").Str("command", "livestream").Logger()
+			ctx = logger.WithContext(ctx)
+
+			// Initializes MQTT client.
+			mc = mqttclient.NewClient(ctx, mqttConfigOptions)
+			if err := mqttclient.CheckConnectivity(mc, 3*time.Second); err != nil {
+				return err
+			}
+			ctx = mqttclient.WithContext(ctx, mc)
+
+			return nil
+		},
+		Action: func(c *cli.Context) error {
+			// Publish live stream.
+			rtpStream := livestream.NewRTPPublisher(ctx, livestream.RTPBroadcastConfigOptions{
+				TopicConfigOptions:     topicConfigOptions,
+				WebRTCConfigOptions:    webRTCConfigOptions,
+				RTPSourceConfigOptions: rtpConfigOptions,
+			})
+			rtspStream := livestream.NewRTSPPublisher(ctx, livestream.RTSPBroadcastConfigOptions{
+				TopicConfigOptions:      topicConfigOptions,
+				WebRTCConfigOptions:     webRTCConfigOptions,
+				RTSPSourceConfigOptions: rtspConfigOptions,
+			})
+
+			errChan := make(chan error, 2)
+			for _, s := range []livestream.Livestream{rtpStream, rtspStream} {
+				s := s
+				go func() {
+					if err := s.Publish(); err != nil {
+						logger.Err(err).
+							Str("id", s.ID()).
+							Int32("track_source", int32(s.TrackSource())).
+							Msg(
+								"live stream publishing failed")
+						errChan <- err
+					}
+				}()
+			}
+			return <-errChan
+		},
+		After: func(c *cli.Context) error {
+			logger.Info().Msg("exits")
+			return nil
+		},
+	}
+}
+
+// loadConfigFlag sets a config file path for app command.
+// Note: you can't set any other flags' `Required` value to `true`,
+// As it conflicts with this flag. You can set only either this flag or specifically the other flags but not both.
+func loadConfigFlag() []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:        "config",
+			Aliases:     []string{"c"},
+			Usage:       "Config file path",
+			Value:       "config/config.yaml",
+			DefaultText: "config/config.yaml",
+		},
+	}
+}
+
+func mqttFlags(mqttConfigOptions *mqttclient.ConfigOptions) []cli.Flag {
+	return []cli.Flag{
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "mqtt-server",
+			Usage:       "MQTT server address",
+			Value:       "tcp://mosquitto:1883",
+			DefaultText: "tcp://mosquitto:1883",
+			Destination: &mqttConfigOptions.Server,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "mqtt-clientID",
+			Usage:       "MQTT client id",
+			Value:       "mqtt_edge",
+			DefaultText: "mqtt_edge",
+			Destination: &mqttConfigOptions.ClientID,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "mqtt-username",
+			Usage:       "MQTT broker username",
+			Value:       "",
+			Destination: &mqttConfigOptions.Username,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "mqtt-password",
+			Usage:       "MQTT broker password",
+			Value:       "",
+			Destination: &mqttConfigOptions.Password,
+		}),
+	}
+}
+
+func topicFlags(topicConfigOptions *livestream.TopicConfigOptions) []cli.Flag {
+	return []cli.Flag{
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "topic-offer",
+			Usage:       "MQTT topic for WebRTC SDP offer signaling",
+			Value:       "/edge/livestream/signal/offer",
+			DefaultText: "/edge/livestream/signal/offer",
+			Destination: &topicConfigOptions.OfferTopic,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "topic-answer",
+			Usage:       "MQTT topic for WebRTC SDP answer signaling",
+			Value:       "/edge/livestream/signal/answer",
+			DefaultText: "/edge/livestream/signal/answer",
+			Destination: &topicConfigOptions.AnswerTopic,
+		}),
+	}
+}
+
+func webRTCFlags(webRTCConfigOptions *livestream.WebRTCConfigOptions) []cli.Flag {
+	return []cli.Flag{
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "ice-server",
+			Usage:       "ICE server address for webRTC",
+			Value:       "stun:stun.l.google.com:19302",
+			DefaultText: "stun:stun.l.google.com:19302",
+			Destination: &webRTCConfigOptions.ICEServer,
+		}),
+	}
+}
+
+func rtpFlags(rtpConfigOptions *livestream.RTPSourceConfigOptions) []cli.Flag {
+	return []cli.Flag{
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "rtp-host",
+			Usage:       "Host of RTP server",
+			Value:       "0.0.0.0",
+			DefaultText: "0.0.0.0",
+			Destination: &rtpConfigOptions.RTPHost,
+		}),
+		altsrc.NewIntFlag(&cli.IntFlag{
+			Name:        "rtp-port",
+			Usage:       "Port of RTP server",
+			Value:       5004,
+			DefaultText: "5004",
+			Destination: &rtpConfigOptions.RTPPort,
+		}),
+	}
+}
+
+func rtspFlags(rtspConfigOptions *livestream.RTSPSourceConfigOptions) []cli.Flag {
+	return []cli.Flag{
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "rtsp-addr",
+			Usage:       "Address of RTSP server",
+			Value:       "",
+			Destination: &rtspConfigOptions.RTSPAddr,
+		}),
+	}
+}

@@ -1,0 +1,27 @@
+version: "3.9"
+services:
+  livestream:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.livestream.dev
+    container_name: livestream
+    command:
+      - --debug
+      - livestream
+      - -c
+      - /config/config.yaml
+    environment:
+      - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
+    volumes:
+      - ../config/config.dev.yaml:/config/config.yaml
+      - /etc/machine-id:/etc/machine-id
+    depends_on:
+      - mosquitto
+    restart: on-failure
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    volumes:
+      - ../config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    restart: on-failure
