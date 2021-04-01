@@ -118,6 +118,7 @@ func (s *session) createSubscriber(videoTrack *webrtc.TrackLocalStaticRTP) error
 // It's a generic function for both publisher and subscriber.
 func (s *session) createPeerConnection(peerConnection *webrtc.PeerConnection, actor actor) error {
 	// Receive remote offer.
+	// TODO: Timeout for sending and receiving in case of blocking side.
 	var offer *pb.SessionDescription
 	if actor == peerPublisher {
 		offer = <-s.publisherChans.OfferChan
@@ -168,7 +169,8 @@ func (s *session) createPeerConnection(peerConnection *webrtc.PeerConnection, ac
 	// in a production application you should exchange ICE Candidates via OnICECandidate
 	<-gatherComplete
 
-	// Send answer local description.
+	// Send answer of local description.
+	// This is a universal answer for both publisher and subscriber in protobuf format.
 	sdp := webrtcSdp2pbSdp(peerConnection.LocalDescription())
 	if actor == peerPublisher {
 		s.publisherChans.AnswerChan <- sdp
@@ -209,14 +211,16 @@ func processRTCP(rtpSender *webrtc.RTPSender, logger *zerolog.Logger) {
 
 func pbSdp2webrtcSdp(sdp *pb.SessionDescription) webrtc.SessionDescription {
 	return webrtc.SessionDescription{
-		Type: webrtc.SDPType(sdp.Type),
-		SDP:  string(sdp.Description),
+		Type: webrtc.NewSDPType(sdp.Sdp.Type),
+		SDP:  sdp.Sdp.Sdp,
 	}
 }
 
 func webrtcSdp2pbSdp(sdp *webrtc.SessionDescription) *pb.SessionDescription {
 	return &pb.SessionDescription{
-		Type:        int32(sdp.Type),
-		Description: []byte(sdp.SDP),
+		Sdp: &pb.SDP{
+			Type: sdp.Type.String(),
+			Sdp:  sdp.SDP,
+		},
 	}
 }

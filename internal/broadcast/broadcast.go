@@ -67,9 +67,16 @@ func (svc *Service) Broadcast() error {
 		// You can get id and track source only when half of session (publisher session) completes.
 		// Therefore, you must start session first.
 		if err := s.start(func(id machineID, t pb.TrackSource, s *subscriberChans) {
-			inner := make(subscriber)
-			inner[t] = s
-			svc.sessions[id] = inner
+			// This is where get buggy. You can't make new inner map for each session,
+			// because by this way you erase previous inner map which has track_source key value.
+			// In face, the inner map should be shared between two sessions which have the same machine id.
+			if inner, ok := svc.sessions[id]; ok {
+				inner[t] = s
+			} else {
+				inner := make(subscriber)
+				inner[t] = s
+				svc.sessions[id] = inner
+			}
 		}); err != nil {
 			return fmt.Errorf("session failed: %w", err)
 		}
@@ -82,50 +89,71 @@ func (svc *Service) handleSubscription() http.HandlerFunc {
 	logger := svc.logger.With().Str("component", "subscriber").Logger()
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		c, err := websocket.Accept(w, r, nil)
+		c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+			OriginPatterns: []string{"*"},
+		})
 		if err != nil {
 			logger.Panic().Err(err).Msg("webSocket failed to establish connection")
 		}
-		defer c.Close(websocket.StatusInternalError, "")
+		defer c.Close(websocket.StatusNormalClosure, "")
 
 		ctx, cancel := context.WithCancel(r.Context())
 		defer cancel()
 
-		var offer pb.SessionDescription
-		if err := wsjson.Read(ctx, c, &offer); err != nil {
-			logger.Err(err).Msg("could not read message")
-			return
-		}
-		logger.Debug().Str("offer", offer.String()).Msg("received offer")
-
-		var (
-			offerChan  chan *pb.SessionDescription
-			answerChan chan *pb.SessionDescription
-		)
-		// The subscriber's sdp id must be equal to session's id.
-		if inner, ok := svc.sessions[machineID(offer.Id)]; ok {
-			// The subscriber's sdp track source must be equal to session's track source.
-			if subscriber, ok := inner[offer.TrackSource]; ok {
-				offerChan = subscriber.offerChan
-				answerChan = subscriber.answerChan
+		// Continually reading from WebSocket connection.
+		// To reduce complexity, we don't use channel pipeline transporting reading and writing messages.
+		for {
+			var offer pb.SessionDescription
+			if err := wsjson.Read(ctx, c, &offer); err != nil {
+				logger.Err(err).Msg("could not read message")
+				return
 			}
-		}
-		// If offerChan or answerChan is nil, it means offer.Id or offer.TrackSource does not exists in any session.
-		// And this request message is invalid.
-		if offerChan == nil || answerChan == nil {
-			if err := wsjson.Write(ctx, c, "wrong id or track_source"); err != nil {
+			logger.Debug().
+				Str("offer", offer.String()).
+				Str("offer.id", offer.Id).
+				Int32("offer.track_source", int32(offer.TrackSource)).
+				Msg("received offer")
+
+			var (
+				offerChan  chan *pb.SessionDescription
+				answerChan chan *pb.SessionDescription
+			)
+			// The subscriber's sdp id must be equal to session's id.
+			if inner, ok := svc.sessions[machineID(offer.Id)]; ok {
+				logger.Debug().
+					Str("offer.id", offer.Id).
+					Int32("offer.track_source", int32(offer.TrackSource)).
+					Msg("got machine id")
+				// The subscriber's sdp track source must be equal to session's track source.
+				if subscriber, ok := inner[offer.TrackSource]; ok {
+					offerChan = subscriber.offerChan
+					answerChan = subscriber.answerChan
+					logger.Debug().
+						Str("offer.id", offer.Id).
+						Int32("offer.track_source", int32(offer.TrackSource)).
+						Msg("got subscriber channels")
+				}
+			}
+			// If offerChan or answerChan is nil, it means offer.Id or offer.TrackSource does not exists in any session.
+			// And this request message is invalid.
+			if offerChan == nil || answerChan == nil {
+				logger.Debug().
+					Str("offer.id", offer.Id).
+					Int32("offer.track_source", int32(offer.TrackSource)).
+					Msg("offerChan or answerChan is nil")
+
+				if err := wsjson.Write(ctx, c, "wrong id or track_source"); err != nil {
+					logger.Err(err).Msg("could not write message")
+				}
+				continue
+			}
+			// TODO: Timeout for sending and receiving in case of blocking side.
+			offerChan <- &offer
+
+			answer := <-answerChan
+			if err := wsjson.Write(ctx, c, answer); err != nil {
 				logger.Err(err).Msg("could not write message")
 			}
-			logger.Debug().Msg("offerChan or answerChan is nil")
-			return
 		}
-		offerChan <- &offer
-
-		answer := <-answerChan
-		if err := wsjson.Write(ctx, c, answer); err != nil {
-			panic(err)
-		}
-
-		c.Close(websocket.StatusNormalClosure, "")
 	}
 }

@@ -34,6 +34,8 @@ ENV DEBUG_MQTT_CLIENT=false
 
 VOLUME [ "/config" ]
 
+EXPOSE 8080
+
 ENTRYPOINT [ "/broadcast" ]
 
 CMD [ "--debug", "broadcast", "-c", "/config/config.yaml" ]

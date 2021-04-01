@@ -24,8 +24,8 @@ image:
 
 # Note: '--env-file' value is relative to '-f' value's directory.
 .PHONY: up
-up: down
-	@docker-compose -f docker/docker-compose.dev.yaml up --build -d
+up: down image
+	@docker-compose -f docker/docker-compose.dev.yaml up -d
 
 .PHONY: down
 down:

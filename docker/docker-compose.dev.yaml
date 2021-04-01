@@ -1,9 +1,7 @@
 version: "3.9"
 services:
   livestream:
-    build:
-      context: ../../sphinx
-      dockerfile: docker/Dockerfile.livestream.dev
+    image: ghcr.io/sb-im/sphinx:livestream-amd64-latest
     container_name: livestream
     command:
       - --debug
@@ -21,15 +19,15 @@ services:
     restart: on-failure
 
   broadcast:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile.broadcast.dev
+    image: ghcr.io/sb-im/skywalker:broadcast-latest
     container_name: broadcast
     command:
       - --debug
       - broadcast
       - -c
       - /config/config.yaml
+    ports:
+      - "8080:8080"
     environment:
       - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
     volumes:
