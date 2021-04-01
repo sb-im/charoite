@@ -64,8 +64,10 @@ func (p *publisher) recvAnswer() <-chan *webrtc.SessionDescription {
 // encodeSDP also adds an machine id field value.
 func (p *publisher) encodeSDP(sdp *webrtc.SessionDescription) ([]byte, error) {
 	msg := pb.SessionDescription{
-		Type:        int32(sdp.Type),
-		Description: []byte(sdp.SDP),
+		Sdp: &pb.SDP{
+			Type:        int32(sdp.Type),
+			Description: []byte(sdp.SDP),
+		},
 		Id:          p.id,
 		TrackSource: p.trackSource,
 	}
@@ -82,8 +84,8 @@ func decodeSDP(payload []byte) (*webrtc.SessionDescription, error) {
 		return nil, err
 	}
 	return &webrtc.SessionDescription{
-		Type: webrtc.SDPType(sdp.Type),
-		SDP:  string(sdp.Description),
+		Type: webrtc.SDPType(sdp.Sdp.Type),
+		SDP:  string(sdp.Sdp.Description),
 	}, nil
 }
 
