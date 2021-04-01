@@ -17,7 +17,7 @@ func init() {
 
 func main() {
 	if err := run(os.Args); err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(err).Send()
 	}
 }
 
