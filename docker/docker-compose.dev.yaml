@@ -1,9 +1,7 @@
 version: "3.9"
 services:
   livestream:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile.livestream.dev
+    image: ghcr.io/sb-im/sphinx:livestream-amd64-latest
     container_name: livestream
     command:
       - --debug
