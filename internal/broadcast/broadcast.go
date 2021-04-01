@@ -42,6 +42,7 @@ func New(ctx context.Context, config ConfigOptions) *Service {
 
 // Broadcast broadcasts video streams following publisher -> transfer -> subscribers flow direction.
 func (svc *Service) Broadcast() error {
+	// Start subscriber signalling handler.
 	// Register Websockets handler.
 	http.HandleFunc(svc.config.WSServerConfigOptions.Path, svc.handleSubscription())
 	go func() {
@@ -56,12 +57,12 @@ func (svc *Service) Broadcast() error {
 	}()
 
 	// Start publisher signaling worker.
-	publisher := newPublisher(svc.client, svc.logger, svc.config.TopicConfigOptions)
+	publisher := newPublisher(svc.client, &svc.logger, svc.config.TopicConfigOptions)
 	publisher.Signal()
 
 	// Use a loop to start endless broadcasting sessions.
 	for {
-		s := newSession(&publisher.publisherChans, svc.logger, svc.config.WebRTCConfigOptions)
+		s := newSession(&publisher.publisherChans, &svc.logger, svc.config.WebRTCConfigOptions)
 
 		// You can get id and track source only when half of session (publisher session) completes.
 		// Therefore, you must start session first.
@@ -78,10 +79,12 @@ func (svc *Service) Broadcast() error {
 // handleSubscription is called every time after publisher session and at the start of subscriber session.
 // If the running order is wrong, it blocks forever.
 func (svc *Service) handleSubscription() http.HandlerFunc {
+	logger := svc.logger.With().Str("component", "subscriber").Logger()
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		c, err := websocket.Accept(w, r, nil)
 		if err != nil {
-			panic(err)
+			logger.Panic().Err(err).Msg("webSocket failed to establish connection")
 		}
 		defer c.Close(websocket.StatusInternalError, "")
 
@@ -90,13 +93,16 @@ func (svc *Service) handleSubscription() http.HandlerFunc {
 
 		var offer pb.SessionDescription
 		if err := wsjson.Read(ctx, c, &offer); err != nil {
-			panic(err)
+			logger.Err(err).Msg("could not read message")
+			return
 		}
-		fmt.Printf("Received: %+v\n", offer.Id)
+		logger.Debug().Str("offer", offer.String()).Msg("received offer")
 
+		var (
+			offerChan  chan *pb.SessionDescription
+			answerChan chan *pb.SessionDescription
+		)
 		// The subscriber's sdp id must be equal to session's id.
-		var offerChan chan *pb.SessionDescription
-		var answerChan chan *pb.SessionDescription
 		if inner, ok := svc.sessions[machineID(offer.Id)]; ok {
 			// The subscriber's sdp track source must be equal to session's track source.
 			if subscriber, ok := inner[offer.TrackSource]; ok {
@@ -104,10 +110,14 @@ func (svc *Service) handleSubscription() http.HandlerFunc {
 				answerChan = subscriber.answerChan
 			}
 		}
-		if offerChan == nil {
-			if err := wsjson.Write(ctx, c, "wrong id"); err != nil {
-				panic(err)
+		// If offerChan or answerChan is nil, it means offer.Id or offer.TrackSource does not exists in any session.
+		// And this request message is invalid.
+		if offerChan == nil || answerChan == nil {
+			if err := wsjson.Write(ctx, c, "wrong id or track_source"); err != nil {
+				logger.Err(err).Msg("could not write message")
 			}
+			logger.Debug().Msg("offerChan or answerChan is nil")
+			return
 		}
 		offerChan <- &offer
 

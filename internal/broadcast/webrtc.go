@@ -22,6 +22,13 @@ const (
 	rtcpPLIInterval = time.Second * 3
 )
 
+func (a actor) string() string {
+	if a == peerPublisher {
+		return "publisher"
+	}
+	return "subscriber"
+}
+
 // createLocalTrack creates a local video track shared between publisher and subscriber peers.
 // localTrack is a transfer that transfers video track between publisher and subscriber peers.
 // For localTrack, there can only be one publisher peer, but subscribers can be many.
@@ -74,7 +81,7 @@ func (s *session) createPublisher(videoTrack *webrtc.TrackLocalStaticRTP) error 
 	if err := s.createPeerConnection(peerConnection, peerPublisher); err != nil {
 		return fmt.Errorf("failed to create peer connection: %w", err)
 	}
-	s.logger.Debug().Msg("created PeerConnection for publisher")
+	s.logger.Debug().Str("id", string(s.id)).Int32("track_source", int32(s.trackSource)).Msg("created PeerConnection for publisher")
 
 	return nil
 }
@@ -118,19 +125,26 @@ func (s *session) createPeerConnection(peerConnection *webrtc.PeerConnection, ac
 		// Set up session identity.
 		s.id = machineID(offer.Id)
 		s.trackSource = offer.TrackSource
+
 	} else {
 		offer = <-s.subscriberChans.offerChan
 	}
+	logger := s.logger.With().
+		Str("actor", actor.string()).
+		Str("id", offer.Id).
+		Int32("track_source",
+			int32(offer.TrackSource)).
+		Logger()
 
 	// Set the handler for ICE connection state
 	// This will notify you when the peer has connected/disconnected
 	peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-		s.logger.Debug().Str("state", connectionState.String()).Msg("ICE connection state has changed")
+		logger.Debug().Str("state", connectionState.String()).Msg("ICE connection state has changed")
 		if connectionState == webrtc.ICEConnectionStateFailed {
 			if err := peerConnection.Close(); err != nil {
-				s.logger.Panic().Err(err).Msg("could not close PeerConnection")
+				logger.Panic().Err(err).Msg("could not close PeerConnection")
 			}
-			s.logger.Debug().Msg("PeerConnection has been closed")
+			logger.Debug().Msg("PeerConnection has been closed")
 		}
 	})
 

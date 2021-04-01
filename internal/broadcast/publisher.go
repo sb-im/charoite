@@ -21,19 +21,21 @@ type publisher struct {
 	config         TopicConfigOptions
 }
 
-func newPublisher(client mqtt.Client, logger zerolog.Logger, config TopicConfigOptions) *publisher {
+func newPublisher(client mqtt.Client, logger *zerolog.Logger, config TopicConfigOptions) *publisher {
 	return &publisher{
 		client: client,
-		publisherChans: publisherChans{
+		publisherChans: publisherChans{ // The channel buffer size limits concurrency
 			OfferChan:  make(chan *pb.SessionDescription, 1),
 			AnswerChan: make(chan *pb.SessionDescription, 1),
 		},
-		logger: logger,
+		logger: *logger,
 		config: config,
 	}
 }
 
 func (p *publisher) Signal() {
+	p.logger = p.logger.With().Str("component", "publisher").Logger()
+
 	// The receiving topic is the same for each edge device, but message payload is different.
 	// The id and trackSource in payload determine the following publishing topic.
 	// Receive remote description with MQTT.

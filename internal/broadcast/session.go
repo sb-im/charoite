@@ -1,6 +1,8 @@
 package broadcast
 
 import (
+	"fmt"
+
 	pb "github.com/SB-IM/pb/signal"
 	"github.com/rs/zerolog"
 )
@@ -36,14 +38,14 @@ type session struct {
 	config WebRTCConfigOptions
 }
 
-func newSession(publisherChans *publisherChans, logger zerolog.Logger, config WebRTCConfigOptions) *session {
+func newSession(publisherChans *publisherChans, logger *zerolog.Logger, config WebRTCConfigOptions) *session {
 	return &session{
 		publisherChans: publisherChans,
 		subscriberChans: &subscriberChans{
 			offerChan:  make(chan *pb.SessionDescription, 1),
 			answerChan: make(chan *pb.SessionDescription, 1),
 		},
-		logger: logger,
+		logger: *logger,
 		config: config,
 	}
 }
@@ -54,14 +56,21 @@ func (s *session) start(middle middleFunc) error {
 	if err != nil {
 		return err
 	}
-	s.createPublisher(localTrack)
+	s.logger.Debug().Msg("created local track")
+
+	if err := s.createPublisher(localTrack); err != nil {
+		return fmt.Errorf("failed to crate publisher: %w", err)
+	}
+	s.logger.Debug().Str("id", string(s.id)).Int32("track_source", int32(s.trackSource)).Msg("created a publisher")
 
 	middle(s.id, s.trackSource, s.subscriberChans)
 
 	go func() {
 		// Use a loop to start endless subscriber sessions.
 		for {
-			s.createSubscriber(localTrack)
+			if err := s.createSubscriber(localTrack); err != nil {
+				s.logger.Err(err).Msg("failed to create subscriber")
+			}
 		}
 	}()
 
