@@ -71,7 +71,7 @@ func Command() *cli.Command {
 			return nil
 		},
 		Action: func(c *cli.Context) error {
-			svc := broadcast.New(ctx, broadcast.ConfigOptions{
+			svc := broadcast.New(ctx, &broadcast.ConfigOptions{
 				WebRTCConfigOptions:   webRTCConfigOptions,
 				TopicConfigOptions:    topicConfigOptions,
 				WSServerConfigOptions: wsServerConfigOptions,

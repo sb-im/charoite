@@ -62,7 +62,7 @@ func (s *session) createPublisher(videoTrack *webrtc.TrackLocalStaticRTP) error 
 	// Set a handler for when a new remote track starts, this just distributes all our packets
 	// to connected peers
 	peerConnection.OnTrack(func(t *webrtc.TrackRemote, _ *webrtc.RTPReceiver) {
-		go sendRTCP(peerConnection, t, s.logger)
+		go sendRTCP(peerConnection, t, &s.logger)
 
 		rtpBuf := make([]byte, 1400)
 		for {
@@ -104,7 +104,7 @@ func (s *session) createSubscriber(videoTrack *webrtc.TrackLocalStaticRTP) error
 	if err != nil {
 		return fmt.Errorf("could not add track: %w", err)
 	}
-	go processRTCP(rtpSender, s.logger)
+	go processRTCP(rtpSender, &s.logger)
 
 	if err := s.createPeerConnection(peerConnection, peerSubscriber); err != nil {
 		return fmt.Errorf("failed to create peer connection: %w", err)
@@ -125,7 +125,6 @@ func (s *session) createPeerConnection(peerConnection *webrtc.PeerConnection, ac
 		// Set up session identity.
 		s.id = machineID(offer.Id)
 		s.trackSource = offer.TrackSource
-
 	} else {
 		offer = <-s.subscriberChans.offerChan
 	}
@@ -182,7 +181,7 @@ func (s *session) createPeerConnection(peerConnection *webrtc.PeerConnection, ac
 
 // sendRTCP sends a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval
 // This can be less wasteful by processing incoming RTCP events, then we would emit a NACK/PLI when a viewer requests it
-func sendRTCP(peerConnection *webrtc.PeerConnection, remoteTrack *webrtc.TrackRemote, logger zerolog.Logger) {
+func sendRTCP(peerConnection *webrtc.PeerConnection, remoteTrack *webrtc.TrackRemote, logger *zerolog.Logger) {
 	ticker := time.NewTicker(rtcpPLIInterval)
 	for range ticker.C {
 		if rtcpSendErr := peerConnection.WriteRTCP([]rtcp.Packet{
@@ -198,7 +197,7 @@ func sendRTCP(peerConnection *webrtc.PeerConnection, remoteTrack *webrtc.TrackRe
 // processRTCP reads incoming RTCP packets
 // Before these packets are returned they are processed by interceptors.
 // For things like NACK this needs to be called.
-func processRTCP(rtpSender *webrtc.RTPSender, logger zerolog.Logger) {
+func processRTCP(rtpSender *webrtc.RTPSender, logger *zerolog.Logger) {
 	rtcpBuf := make([]byte, 1500)
 	for {
 		if _, _, rtcpErr := rtpSender.Read(rtcpBuf); rtcpErr != nil {

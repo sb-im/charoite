@@ -28,10 +28,10 @@ type Service struct {
 	sessions map[machineID]subscriber
 	client   mqtt.Client
 	logger   zerolog.Logger
-	config   ConfigOptions
+	config   *ConfigOptions
 }
 
-func New(ctx context.Context, config ConfigOptions) *Service {
+func New(ctx context.Context, config *ConfigOptions) *Service {
 	return &Service{
 		sessions: make(map[machineID]subscriber),
 		client:   mqttclient.FromContext(ctx),
@@ -42,7 +42,7 @@ func New(ctx context.Context, config ConfigOptions) *Service {
 
 // Broadcast broadcasts video streams following publisher -> transfer -> subscribers flow direction.
 func (svc *Service) Broadcast() error {
-	// Start subscriber signalling handler.
+	// Start subscriber signaling handler.
 	// Register Websockets handler.
 	http.HandleFunc(svc.config.WSServerConfigOptions.Path, svc.handleSubscription())
 	go func() {
