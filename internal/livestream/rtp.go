@@ -11,7 +11,7 @@ import (
 )
 
 // rtpListener starts a UDP listener and consumes data stream.
-func rtpListener(address string, videoTrack webrtc.TrackLocal, logger zerolog.Logger) error {
+func rtpListener(address string, videoTrack webrtc.TrackLocal, logger *zerolog.Logger) error {
 	videoTrackSample := videoTrack.(*webrtc.TrackLocalStaticRTP)
 
 	host, port := parseRTPAddress(address)

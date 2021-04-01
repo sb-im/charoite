@@ -23,7 +23,7 @@ type publisher struct {
 	streamSource func() string
 
 	// liveStream blocks indefinitely if there no error.
-	liveStream func(address string, videoTrack webrtc.TrackLocal, logger zerolog.Logger) error
+	liveStream func(address string, videoTrack webrtc.TrackLocal, logger *zerolog.Logger) error
 
 	logger zerolog.Logger
 }
@@ -43,7 +43,7 @@ func (p *publisher) Publish() error {
 	}
 	p.logger.Debug().Msg("created PeerConnection")
 
-	if err := p.liveStream(p.streamSource(), videoTrack, p.logger); err != nil {
+	if err := p.liveStream(p.streamSource(), videoTrack, &p.logger); err != nil {
 		return fmt.Errorf("live stream failed: %w", err)
 	}
 	p.logger.Debug().Msg("live stream is over")
@@ -90,7 +90,7 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 		// }
 
 		if connectionState == webrtc.ICEConnectionStateFailed {
-			if err := peerConnection.Close(); err != nil {
+			if err = peerConnection.Close(); err != nil {
 				p.logger.Panic().Err(err).Msg("closing PeerConnection")
 			}
 			p.logger.Info().Msg("PeerConnection has been closed")
@@ -141,7 +141,11 @@ func (p *publisher) processRTCP(rtpSender *webrtc.RTPSender) {
 // videoTrackRTP creates a RTP video track.
 // The default MIME type is H.264
 func videoTrackRTP() (webrtc.TrackLocal, error) {
-	videoTrack, err := webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264}, "video", "edge_drone")
+	videoTrack, err := webrtc.NewTrackLocalStaticRTP(
+		webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264},
+		"video",
+		"edge_drone",
+	)
 	if err != nil {
 		return nil, fmt.Errorf("could not create TrackLocalStaticRTP: %w", err)
 	}
@@ -151,7 +155,11 @@ func videoTrackRTP() (webrtc.TrackLocal, error) {
 // videoTrackSample creates a sample video track.
 // The default MIME type is H.264
 func videoTrackSample() (webrtc.TrackLocal, error) {
-	videoTrack, err := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264}, "video_webcam", "edge_webcam")
+	videoTrack, err := webrtc.NewTrackLocalStaticSample(
+		webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264},
+		"video_webcam",
+		"edge_webcam",
+	)
 	if err != nil {
 		return nil, fmt.Errorf("could not create TrackLocalStaticSample: %w", err)
 	}
