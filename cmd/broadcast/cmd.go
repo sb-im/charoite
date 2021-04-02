@@ -13,6 +13,7 @@ import (
 	"github.com/urfave/cli/v2/altsrc"
 
 	"github.com/SB-IM/skywalker/internal/broadcast"
+	"github.com/SB-IM/skywalker/internal/broadcast/cfg"
 )
 
 // Command returns a broadcast command.
@@ -25,10 +26,10 @@ func Command() *cli.Command {
 
 		mc mqtt.Client
 
-		mqttConfigOptions     mqttclient.ConfigOptions
-		topicConfigOptions    broadcast.TopicConfigOptions
-		webRTCConfigOptions   broadcast.WebRTCConfigOptions
-		wsServerConfigOptions broadcast.WSServerConfigOptions
+		mqttConfigOptions   mqttclient.ConfigOptions
+		topicConfigOptions  cfg.TopicConfigOptions
+		webRTCConfigOptions cfg.WebRTCConfigOptions
+		serverConfigOptions cfg.ServerConfigOptions
 	)
 
 	flags := func() (flags []cli.Flag) {
@@ -37,7 +38,7 @@ func Command() *cli.Command {
 			mqttFlags(&mqttConfigOptions),
 			topicFlags(&topicConfigOptions),
 			webRTCFlags(&webRTCConfigOptions),
-			wsFlags(&wsServerConfigOptions),
+			serverFlags(&serverConfigOptions),
 		} {
 			flags = append(flags, v...)
 		}
@@ -71,10 +72,10 @@ func Command() *cli.Command {
 			return nil
 		},
 		Action: func(c *cli.Context) error {
-			svc := broadcast.New(ctx, &broadcast.ConfigOptions{
-				WebRTCConfigOptions:   webRTCConfigOptions,
-				TopicConfigOptions:    topicConfigOptions,
-				WSServerConfigOptions: wsServerConfigOptions,
+			svc := broadcast.New(ctx, &cfg.ConfigOptions{
+				WebRTCConfigOptions: webRTCConfigOptions,
+				TopicConfigOptions:  topicConfigOptions,
+				ServerConfigOptions: serverConfigOptions,
 			})
 			err := svc.Broadcast()
 			if err != nil {
@@ -135,7 +136,7 @@ func mqttFlags(mqttConfigOptions *mqttclient.ConfigOptions) []cli.Flag {
 	}
 }
 
-func topicFlags(topicConfigOptions *broadcast.TopicConfigOptions) []cli.Flag {
+func topicFlags(topicConfigOptions *cfg.TopicConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "topic-offer",
@@ -154,7 +155,7 @@ func topicFlags(topicConfigOptions *broadcast.TopicConfigOptions) []cli.Flag {
 	}
 }
 
-func webRTCFlags(webRTCConfigOptions *broadcast.WebRTCConfigOptions) []cli.Flag {
+func webRTCFlags(webRTCConfigOptions *cfg.WebRTCConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "ice-server",
@@ -166,28 +167,21 @@ func webRTCFlags(webRTCConfigOptions *broadcast.WebRTCConfigOptions) []cli.Flag 
 	}
 }
 
-func wsFlags(wsServerConfigOptions *broadcast.WSServerConfigOptions) []cli.Flag {
+func serverFlags(serverConfigOptions *cfg.ServerConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "ws-host",
-			Usage:       "Host of WebSocket server",
+			Name:        "host",
+			Usage:       "Host of webRTC signaling server",
 			Value:       "0.0.0.0",
 			DefaultText: "0.0.0.0",
-			Destination: &wsServerConfigOptions.Host,
+			Destination: &serverConfigOptions.Host,
 		}),
 		altsrc.NewIntFlag(&cli.IntFlag{
-			Name:        "ws-port",
-			Usage:       "Port of WebSocket server",
+			Name:        "port",
+			Usage:       "Port of webRTC signaling server",
 			Value:       8080,
 			DefaultText: "8080",
-			Destination: &wsServerConfigOptions.Port,
-		}),
-		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "ws-path",
-			Usage:       "HTTP path of broadcast service",
-			Value:       "/ws/webrtc",
-			DefaultText: "/ws/webrtc",
-			Destination: &wsServerConfigOptions.Path,
+			Destination: &serverConfigOptions.Port,
 		}),
 	}
 }

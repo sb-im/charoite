@@ -1,9 +1,14 @@
-package broadcast
+package cfg
 
 type ConfigOptions struct {
 	WebRTCConfigOptions
 	TopicConfigOptions
-	WSServerConfigOptions
+	ServerConfigOptions
+}
+
+type PublisherConfigOptions struct {
+	TopicConfigOptions
+	WebRTCConfigOptions
 }
 
 type WebRTCConfigOptions struct {
@@ -15,8 +20,7 @@ type TopicConfigOptions struct {
 	AnswerTopic string
 }
 
-type WSServerConfigOptions struct {
+type ServerConfigOptions struct {
 	Host string
 	Port int
-	Path string
 }

@@ -1,159 +1,58 @@
-// broadcast is an event driven video broadcasting system.
-// It's composed of a model of publisher, transfer and subscribers.
-// The connection between local peer and remote publisher peer can be called a half session and is valid and should be established first.
-// The connection between local peer and remote subscriber peer can also be called a half session but may not be valid.
-// A whole session is made up of three peers. In fact, every publisher fires an event that starts a unique session.
-// And every subscriber fires an event that starts their own half session.
 package broadcast
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	mqttclient "github.com/SB-IM/mqtt-client"
-	pb "github.com/SB-IM/pb/signal"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"nhooyr.io/websocket"
-	"nhooyr.io/websocket/wsjson"
-)
 
-type subscriber map[pb.TrackSource]*subscriberChans
+	"github.com/SB-IM/skywalker/internal/broadcast/cfg"
+	"github.com/SB-IM/skywalker/internal/broadcast/publisher"
+	"github.com/SB-IM/skywalker/internal/broadcast/session"
+	"github.com/SB-IM/skywalker/internal/broadcast/subscriber"
+)
 
 // Service consists of many sessions.
 type Service struct {
-	sessions map[machineID]subscriber
-	client   mqtt.Client
-	logger   zerolog.Logger
-	config   *ConfigOptions
+	client mqtt.Client
+	logger zerolog.Logger
+	config cfg.ConfigOptions
 }
 
-func New(ctx context.Context, config *ConfigOptions) *Service {
+func New(ctx context.Context, config *cfg.ConfigOptions) *Service {
 	return &Service{
-		sessions: make(map[machineID]subscriber),
-		client:   mqttclient.FromContext(ctx),
-		logger:   *log.Ctx(ctx),
-		config:   config,
+		client: mqttclient.FromContext(ctx),
+		logger: *log.Ctx(ctx),
+		config: *config,
 	}
 }
 
-// Broadcast broadcasts video streams following publisher -> transfer -> subscribers flow direction.
-func (svc *Service) Broadcast() error {
-	// Start subscriber signaling handler.
-	// Register Websockets handler.
-	http.HandleFunc(svc.config.WSServerConfigOptions.Path, svc.handleSubscription())
-	go func() {
-		// Start HTTP server.
-		svc.logger.Info().Str("host",
-			svc.config.WSServerConfigOptions.Host).Int("port",
-			svc.config.WSServerConfigOptions.Port,
-		).Msg("starting HTTP server for WebSocket")
-		svc.logger.Fatal().Err(http.ListenAndServe(
-			svc.config.WSServerConfigOptions.Host+":"+strconv.Itoa(svc.config.WSServerConfigOptions.Port),
-			nil))
-	}()
+func (s *Service) Broadcast() error {
+	sessions := make(session.Sessions)
+	pub := publisher.New(s.client, sessions, &s.logger, cfg.PublisherConfigOptions{
+		TopicConfigOptions:  s.config.TopicConfigOptions,
+		WebRTCConfigOptions: s.config.WebRTCConfigOptions,
+	})
+	pub.Signal()
 
-	// Start publisher signaling worker.
-	publisher := newPublisher(svc.client, &svc.logger, svc.config.TopicConfigOptions)
-	publisher.Signal()
+	sub := subscriber.New(sessions, &s.logger, s.config.WebRTCConfigOptions)
+	handler := sub.Signal()
 
-	// Use a loop to start endless broadcasting sessions.
-	for {
-		s := newSession(&publisher.publisherChans, &svc.logger, svc.config.WebRTCConfigOptions)
-
-		// You can get id and track source only when half of session (publisher session) completes.
-		// Therefore, you must start session first.
-		if err := s.start(func(id machineID, t pb.TrackSource, s *subscriberChans) {
-			// This is where get buggy. You can't make new inner map for each session,
-			// because by this way you erase previous inner map which has track_source key value.
-			// In face, the inner map should be shared between two sessions which have the same machine id.
-			if inner, ok := svc.sessions[id]; ok {
-				inner[t] = s
-			} else {
-				inner := make(subscriber)
-				inner[t] = s
-				svc.sessions[id] = inner
-			}
-		}); err != nil {
-			return fmt.Errorf("session failed: %w", err)
-		}
-	}
+	server := s.newServer(handler)
+	return server.ListenAndServe()
 }
 
-// handleSubscription is called every time after publisher session and at the start of subscriber session.
-// If the running order is wrong, it blocks forever.
-func (svc *Service) handleSubscription() http.HandlerFunc {
-	logger := svc.logger.With().Str("component", "subscriber").Logger()
-
-	return func(w http.ResponseWriter, r *http.Request) {
-		c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-			OriginPatterns: []string{"*"},
-		})
-		if err != nil {
-			logger.Panic().Err(err).Msg("webSocket failed to establish connection")
-		}
-		defer c.Close(websocket.StatusNormalClosure, "")
-
-		ctx, cancel := context.WithCancel(r.Context())
-		defer cancel()
-
-		// Continually reading from WebSocket connection.
-		// To reduce complexity, we don't use channel pipeline transporting reading and writing messages.
-		for {
-			var offer pb.SessionDescription
-			if err := wsjson.Read(ctx, c, &offer); err != nil {
-				logger.Err(err).Msg("could not read message")
-				return
-			}
-			logger.Debug().
-				Str("offer", offer.String()).
-				Str("offer.id", offer.Id).
-				Int32("offer.track_source", int32(offer.TrackSource)).
-				Msg("received offer")
-
-			var (
-				offerChan  chan *pb.SessionDescription
-				answerChan chan *pb.SessionDescription
-			)
-			// The subscriber's sdp id must be equal to session's id.
-			if inner, ok := svc.sessions[machineID(offer.Id)]; ok {
-				logger.Debug().
-					Str("offer.id", offer.Id).
-					Int32("offer.track_source", int32(offer.TrackSource)).
-					Msg("got machine id")
-				// The subscriber's sdp track source must be equal to session's track source.
-				if subscriber, ok := inner[offer.TrackSource]; ok {
-					offerChan = subscriber.offerChan
-					answerChan = subscriber.answerChan
-					logger.Debug().
-						Str("offer.id", offer.Id).
-						Int32("offer.track_source", int32(offer.TrackSource)).
-						Msg("got subscriber channels")
-				}
-			}
-			// If offerChan or answerChan is nil, it means offer.Id or offer.TrackSource does not exists in any session.
-			// And this request message is invalid.
-			if offerChan == nil || answerChan == nil {
-				logger.Debug().
-					Str("offer.id", offer.Id).
-					Int32("offer.track_source", int32(offer.TrackSource)).
-					Msg("offerChan or answerChan is nil")
-
-				if err := wsjson.Write(ctx, c, "wrong id or track_source"); err != nil {
-					logger.Err(err).Msg("could not write message")
-				}
-				continue
-			}
-			// TODO: Timeout for sending and receiving in case of blocking side.
-			offerChan <- &offer
-
-			answer := <-answerChan
-			if err := wsjson.Write(ctx, c, answer); err != nil {
-				logger.Err(err).Msg("could not write message")
-			}
-		}
+func (s *Service) newServer(handler http.Handler) *http.Server {
+	return &http.Server{
+		Handler: handler,
+		Addr:    s.config.Host + ":" + strconv.Itoa(s.config.Port),
+		// Good practice: enforce timeouts for servers you create!
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
 	}
 }
