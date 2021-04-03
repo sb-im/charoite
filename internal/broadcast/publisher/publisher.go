@@ -12,7 +12,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/SB-IM/skywalker/internal/broadcast/cfg"
-	"github.com/SB-IM/skywalker/internal/broadcast/session"
 	webrtcx "github.com/SB-IM/skywalker/internal/broadcast/webrtc"
 )
 
@@ -101,7 +100,7 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 		logger.Debug().Str("answer_topic", answerTopic).Str("answer", answer.String()).Msg("sent answer to edge")
 
 		// Register session on signaling success.
-		p.registerSession(session.MachineID(offer.Id), offer.TrackSource, videoTrack)
+		p.registerSession(offer.Id, offer.TrackSource, videoTrack)
 	}
 }
 
@@ -130,15 +129,10 @@ func (p *Publisher) signalPeerConnection(offer *pb.SessionDescription, logger *z
 }
 
 func (p *Publisher) registerSession(
-	id session.MachineID,
+	id string,
 	trackSource pb.TrackSource,
 	videoTrack *webrtc.TrackLocalStaticRTP,
 ) {
-	if s, ok := p.sessions.Load(id); ok {
-		s.(session.Session)[trackSource] = videoTrack
-	} else {
-		s := make(session.Session)
-		s[trackSource] = videoTrack
-		p.sessions.Store(id, s)
-	}
+	sessionID := id + strconv.Itoa(int(trackSource))
+	p.sessions.Store(sessionID, videoTrack)
 }

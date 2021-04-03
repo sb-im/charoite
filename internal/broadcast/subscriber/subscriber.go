@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
 
 	pb "github.com/SB-IM/pb/signal"
 	"github.com/gorilla/mux"
+	"github.com/pion/webrtc/v3"
 	"github.com/rs/zerolog"
 
 	"github.com/SB-IM/skywalker/internal/broadcast/cfg"
-	"github.com/SB-IM/skywalker/internal/broadcast/session"
 	webrtcx "github.com/SB-IM/skywalker/internal/broadcast/webrtc"
 )
 
@@ -57,22 +58,17 @@ func (s *Subscriber) handleSignal() http.HandlerFunc {
 			return
 		}
 		logger := s.logger.With().Str("id", offer.Id).Int32("track_source", int32(offer.TrackSource)).Logger()
-		logger.Debug().Str("offer", offer.String()).Msg("received offer from subscriber")
+		logger.Debug().Msg("received offer from subscriber")
 
-		ses, ok := s.sessions.Load(session.MachineID(offer.Id))
+		sessionID := offer.Id + strconv.Itoa(int(offer.TrackSource))
+		value, ok := s.sessions.Load(sessionID)
 		if !ok {
-			logger.Warn().Msg("no machine in found in existing sessions")
-			http.Error(w, "wrong id", http.StatusBadRequest)
-			return
-		}
-		videoTrack, ok := ses.(session.Session)[offer.TrackSource]
-		if !ok {
-			logger.Warn().Msg("no track source found in existing sessions")
-			http.Error(w, "wrong track_source", http.StatusBadRequest)
+			logger.Warn().Msg("no machine id or track source found in existing sessions")
+			http.Error(w, "wrong id or track source", http.StatusBadRequest)
 			return
 		}
 
-		wcx := webrtcx.New(videoTrack, s.config, &logger)
+		wcx := webrtcx.New(value.(*webrtc.TrackLocalStaticRTP), s.config, &logger)
 		// TODO: handle blocking case with timeout for channels.
 		wcx.OfferChan <- &offer
 		if err := wcx.CreateSubscriber(); err != nil {
@@ -89,6 +85,6 @@ func (s *Subscriber) handleSignal() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		logger.Debug().Str("answer", answer.Sdp.String()).Msg("sent answer to subscriber")
+		logger.Debug().Msg("sent answer to subscriber")
 	}
 }
