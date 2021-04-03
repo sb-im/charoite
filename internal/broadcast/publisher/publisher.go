@@ -68,21 +68,24 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 			p.logger.Err(err).Msg("could not unmarshal sdp")
 			return
 		}
-		p.logger.Debug().
-			Str("id", offer.Id).
-			Str("topic", p.config.OfferTopic).
-			Int32("track_source", int32(offer.TrackSource)).
-			Msg("received offer from edge")
 
-		answer, videoTrack, err := p.signalPeerConnection(&offer)
+		logger := p.logger.With().
+			Str("offer_topic", p.config.OfferTopic).
+			Str("id", offer.Id).
+			Int32("track_source", int32(offer.TrackSource)).
+			Logger()
+		logger.Debug().Str("offer", offer.String()).Msg("received offer from edge")
+
+		answer, videoTrack, err := p.signalPeerConnection(&offer, &logger)
 		if err != nil {
-			p.logger.Err(err).Msg("failed to signal peer connection")
+			logger.Err(err).Msg("failed to signal peer connection")
 			return
 		}
+		logger.Debug().Msg("Successfully signaled peer connection")
 
 		payload, err := proto.Marshal(answer)
 		if err != nil {
-			p.logger.Err(err).Msg("could not encode sdp")
+			logger.Err(err).Msg("could not encode sdp")
 			return
 		}
 
@@ -94,7 +97,7 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 			p.logger.Err(t.Error()).Msgf("could not publish to %s", answerTopic)
 			return
 		}
-		p.logger.Debug().Str("topic", answerTopic).Msg("sent answer to edge")
+		logger.Debug().Str("answer_topic", answerTopic).Str("answer", answer.String()).Msg("sent answer to edge")
 
 		// Register session on signaling success.
 		p.registerSession(session.MachineID(offer.Id), offer.TrackSource, videoTrack)
@@ -102,7 +105,7 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 }
 
 // signalPeerConnection creates video track and performs webRTC signaling.
-func (p *Publisher) signalPeerConnection(offer *pb.SessionDescription) (
+func (p *Publisher) signalPeerConnection(offer *pb.SessionDescription, logger *zerolog.Logger) (
 	*pb.SessionDescription,
 	*webrtc.TrackLocalStaticRTP,
 	error,
@@ -111,13 +114,16 @@ func (p *Publisher) signalPeerConnection(offer *pb.SessionDescription) (
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not create webRTC local video track: %w", err)
 	}
-	w := webrtcx.New(videoTrack, p.config.WebRTCConfigOptions, &p.logger)
+	logger.Debug().Msg("created video track")
+
+	w := webrtcx.New(videoTrack, p.config.WebRTCConfigOptions, logger)
 
 	// TODO: handle blocking case with timeout for channels.
 	w.OfferChan <- offer
 	if err := w.CreatePublisher(); err != nil {
 		return nil, nil, fmt.Errorf("failed to create webRTC publisher: %w", err)
 	}
+	logger.Debug().Msg("created publisher")
 
 	return <-w.AnswerChan, videoTrack, nil
 }
