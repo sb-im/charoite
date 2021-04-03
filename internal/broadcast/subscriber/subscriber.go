@@ -3,6 +3,7 @@ package subscriber
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 
 	pb "github.com/SB-IM/pb/signal"
 	"github.com/gorilla/mux"
@@ -37,6 +38,10 @@ func New(sessions session.Sessions, logger *zerolog.Logger, config cfg.WebRTCCon
 func (s *Subscriber) Signal() http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/v1/broadcast/signal", s.handleSignal()).Methods(http.MethodPost)
+
+	if os.Getenv("DEBUG") == "true" {
+		r.Handle("/", http.FileServer(http.Dir("e2e/broadcast/static")))
+	}
 	s.logger.Debug().Msg("registered signal HTTP handler")
 	return r
 }
@@ -77,11 +82,12 @@ func (s *Subscriber) handleSignal() http.HandlerFunc {
 		logger.Debug().Msg("successfully created subscriber")
 
 		answer := <-wcx.AnswerChan
-		w.Header().Add("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(&answer.Sdp); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(answer.Sdp); err != nil {
 			logger.Err(err).Msg("could not encode json response body")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		logger.Debug().Msg("sent answer to subscriber")
+		logger.Debug().Str("answer", answer.Sdp.String()).Msg("sent answer to subscriber")
 	}
 }

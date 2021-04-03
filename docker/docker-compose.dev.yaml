@@ -22,7 +22,6 @@ services:
     image: ghcr.io/sb-im/skywalker:broadcast-latest
     container_name: broadcast
     command:
-      - --debug
       - broadcast
       - -c
       - /config/config.yaml
@@ -30,6 +29,7 @@ services:
       - "8080:8080"
     environment:
       - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
+      - DEBUG=true
     volumes:
       - ../config/config.dev.yaml:/config/config.yaml
     depends_on:

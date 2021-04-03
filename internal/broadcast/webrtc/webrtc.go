@@ -83,13 +83,7 @@ func (w *WebRTC) CreatePublisher() error {
 // CreateSubscriber creates a webRTC subscriber peer.
 // Caller must send offer first by OfferChan or this function blocks waiting for receiving offer forever.
 func (w *WebRTC) CreateSubscriber() error {
-	peerConnection, err := webrtc.NewPeerConnection(webrtc.Configuration{
-		ICEServers: []webrtc.ICEServer{
-			{
-				URLs: []string{w.config.ICEServer},
-			},
-		},
-	})
+	peerConnection, err := w.newPeerConnection()
 	if err != nil {
 		return fmt.Errorf("could not create PeerConnection: %w", err)
 	}
@@ -124,16 +118,16 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 	})
 
 	if err := peerConnection.SetRemoteDescription(pbSdp2webrtcSdp(offer)); err != nil {
-		return fmt.Errorf("could not set remote describption: %w", err)
+		return fmt.Errorf("could not set remote description: %w", err)
 	}
+
+	// Create channel that is blocked until ICE Gathering is complete
+	gatherComplete := webrtc.GatheringCompletePromise(peerConnection)
 
 	answer, err := peerConnection.CreateAnswer(nil)
 	if err != nil {
 		return fmt.Errorf("could not create answer: %w", err)
 	}
-
-	// Create channel that is blocked until ICE Gathering is complete
-	gatherComplete := webrtc.GatheringCompletePromise(peerConnection)
 
 	if err = peerConnection.SetLocalDescription(answer); err != nil {
 		return fmt.Errorf("could not set local description: %w", err)
