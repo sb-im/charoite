@@ -22,17 +22,15 @@ const (
 type WebRTC struct {
 	logger     zerolog.Logger
 	config     cfg.WebRTCConfigOptions
-	videoTrack *webrtc.TrackLocalStaticRTP
 	OfferChan  chan *pb.SessionDescription
 	AnswerChan chan *pb.SessionDescription
 }
 
 // New returns a new WebRTC.
-func New(videoTrack *webrtc.TrackLocalStaticRTP, config cfg.WebRTCConfigOptions, logger *zerolog.Logger) *WebRTC {
+func New(config cfg.WebRTCConfigOptions, logger *zerolog.Logger) *WebRTC {
 	return &WebRTC{
 		logger:     *logger,
 		config:     config,
-		videoTrack: videoTrack,
 		OfferChan:  make(chan *pb.SessionDescription, 1), // Make 1 buffer so offer sending never blocks
 		AnswerChan: make(chan *pb.SessionDescription, 1), // Make 1 buffer so answer sending never blocks
 	}
@@ -46,7 +44,7 @@ func CreateLocalTrack() (*webrtc.TrackLocalStaticRTP, error) {
 
 // CreatePublisher creates a webRTC publisher peer.
 // Caller must send offer first by OfferChan or this function blocks waiting for receiving offer forever.
-func (w *WebRTC) CreatePublisher() error {
+func (w *WebRTC) CreatePublisher(videoTrack *webrtc.TrackLocalStaticRTP) error {
 	peerConnection, err := w.newPeerConnection()
 	if err != nil {
 		return fmt.Errorf("could not create PeerConnection: %w", err)
@@ -68,7 +66,7 @@ func (w *WebRTC) CreatePublisher() error {
 				w.logger.Panic().Err(err).Msg("could not read buffer")
 			}
 			// ErrClosedPipe means we don't have any subscribers, this is ok if no peers have connected yet
-			if _, err = w.videoTrack.Write(rtpBuf[:i]); err != nil && !errors.Is(err, io.ErrClosedPipe) {
+			if _, err = videoTrack.Write(rtpBuf[:i]); err != nil && !errors.Is(err, io.ErrClosedPipe) {
 				w.logger.Panic().Err(err).Msg("could not write video track")
 			}
 		}
@@ -84,13 +82,13 @@ func (w *WebRTC) CreatePublisher() error {
 
 // CreateSubscriber creates a webRTC subscriber peer.
 // Caller must send offer first by OfferChan or this function blocks waiting for receiving offer forever.
-func (w *WebRTC) CreateSubscriber() error {
+func (w *WebRTC) CreateSubscriber(videoTrack *webrtc.TrackLocalStaticRTP) error {
 	peerConnection, err := w.newPeerConnection()
 	if err != nil {
 		return fmt.Errorf("could not create PeerConnection: %w", err)
 	}
 
-	rtpSender, err := peerConnection.AddTrack(w.videoTrack)
+	rtpSender, err := peerConnection.AddTrack(videoTrack)
 	if err != nil {
 		return fmt.Errorf("could not add track: %w", err)
 	}

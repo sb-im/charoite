@@ -116,11 +116,11 @@ func (p *Publisher) signalPeerConnection(offer *pb.SessionDescription, logger *z
 	}
 	logger.Debug().Msg("created video track")
 
-	w := webrtcx.New(videoTrack, p.config.WebRTCConfigOptions, logger)
+	w := webrtcx.New(p.config.WebRTCConfigOptions, logger)
 
 	// TODO: handle blocking case with timeout for channels.
 	w.OfferChan <- offer
-	if err := w.CreatePublisher(); err != nil {
+	if err := w.CreatePublisher(videoTrack); err != nil {
 		return nil, nil, fmt.Errorf("failed to create webRTC publisher: %w", err)
 	}
 	logger.Debug().Msg("created publisher")
