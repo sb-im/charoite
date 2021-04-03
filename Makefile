@@ -50,3 +50,7 @@ log-livestream:
 .PHONY: log-broadcast
 log-broadcast:
 	@docker-compose -f docker/docker-compose.dev.yaml logs -f broadcast
+
+.PHONY: e2e-broadcast
+e2e-broadcast:
+	@go run ./e2e/broadcast

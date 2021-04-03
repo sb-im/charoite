@@ -36,13 +36,14 @@
         };
         console.log(`Sending offer ${i}: ${JSON.stringify(sdp)}`);
 
-        return fetch("/v1/broadcast/signal", {
+        return fetch(`http://${window.location.hostname}:8080/v1/broadcast/signal`, {
           method: "post",
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
           },
           body: JSON.stringify(sdp),
+          mode: "no-cors"
         });
       })
       .then((res) => res.json())
