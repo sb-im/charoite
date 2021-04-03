@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"sync"
 
 	pb "github.com/SB-IM/pb/signal"
 	"github.com/gorilla/mux"
@@ -21,11 +22,11 @@ type Subscriber struct {
 
 	// sessions must be created before used by publisher and is shared between publishers ans subscribers.
 	// It's only read by subscriber.
-	sessions session.Sessions
+	sessions *sync.Map
 }
 
 // New returns a new Subscriber.
-func New(sessions session.Sessions, logger *zerolog.Logger, config cfg.WebRTCConfigOptions) *Subscriber {
+func New(sessions *sync.Map, logger *zerolog.Logger, config cfg.WebRTCConfigOptions) *Subscriber {
 	l := logger.With().Str("component", "Subscriber").Logger()
 	return &Subscriber{
 		sessions: sessions,
@@ -58,13 +59,13 @@ func (s *Subscriber) handleSignal() http.HandlerFunc {
 		logger := s.logger.With().Str("id", offer.Id).Int32("track_source", int32(offer.TrackSource)).Logger()
 		logger.Debug().Str("offer", offer.String()).Msg("received offer from subscriber")
 
-		ses, ok := s.sessions[session.MachineID(offer.Id)]
+		ses, ok := s.sessions.Load(session.MachineID(offer.Id))
 		if !ok {
 			logger.Warn().Msg("no machine in found in existing sessions")
 			http.Error(w, "wrong id", http.StatusBadRequest)
 			return
 		}
-		videoTrack, ok := ses[offer.TrackSource]
+		videoTrack, ok := ses.(session.Session)[offer.TrackSource]
 		if !ok {
 			logger.Warn().Msg("no track source found in existing sessions")
 			http.Error(w, "wrong track_source", http.StatusBadRequest)

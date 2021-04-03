@@ -3,6 +3,7 @@ package publisher
 import (
 	"fmt"
 	"strconv"
+	"sync"
 
 	pb "github.com/SB-IM/pb/signal"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -23,13 +24,13 @@ type Publisher struct {
 
 	// sessions must be created before used by publisher and is shared between publishers and subscribers.
 	// It's mainly written and maintained by publishers
-	sessions session.Sessions
+	sessions *sync.Map
 }
 
 // New returns a new Publisher.
 func New(
 	client mqtt.Client,
-	sessions session.Sessions,
+	sessions *sync.Map,
 	logger *zerolog.Logger,
 	config cfg.PublisherConfigOptions,
 ) *Publisher {
@@ -133,11 +134,11 @@ func (p *Publisher) registerSession(
 	trackSource pb.TrackSource,
 	videoTrack *webrtc.TrackLocalStaticRTP,
 ) {
-	if s, ok := p.sessions[id]; ok {
-		s[trackSource] = videoTrack
+	if s, ok := p.sessions.Load(id); ok {
+		s.(session.Session)[trackSource] = videoTrack
 	} else {
 		s := make(session.Session)
 		s[trackSource] = videoTrack
-		p.sessions[id] = s
+		p.sessions.Store(id, s)
 	}
 }

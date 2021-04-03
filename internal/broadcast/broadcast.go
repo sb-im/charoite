@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	mqttclient "github.com/SB-IM/mqtt-client"
@@ -13,15 +14,15 @@ import (
 
 	"github.com/SB-IM/skywalker/internal/broadcast/cfg"
 	"github.com/SB-IM/skywalker/internal/broadcast/publisher"
-	"github.com/SB-IM/skywalker/internal/broadcast/session"
 	"github.com/SB-IM/skywalker/internal/broadcast/subscriber"
 )
 
 // Service consists of many sessions.
 type Service struct {
-	client mqtt.Client
-	logger zerolog.Logger
-	config cfg.ConfigOptions
+	client   mqtt.Client
+	logger   zerolog.Logger
+	config   cfg.ConfigOptions
+	sessions sync.Map
 }
 
 func New(ctx context.Context, config *cfg.ConfigOptions) *Service {
@@ -33,14 +34,13 @@ func New(ctx context.Context, config *cfg.ConfigOptions) *Service {
 }
 
 func (s *Service) Broadcast() error {
-	sessions := make(session.Sessions)
-	pub := publisher.New(s.client, sessions, &s.logger, cfg.PublisherConfigOptions{
+	pub := publisher.New(s.client, &s.sessions, &s.logger, cfg.PublisherConfigOptions{
 		TopicConfigOptions:  s.config.TopicConfigOptions,
 		WebRTCConfigOptions: s.config.WebRTCConfigOptions,
 	})
 	pub.Signal()
 
-	sub := subscriber.New(sessions, &s.logger, s.config.WebRTCConfigOptions)
+	sub := subscriber.New(&s.sessions, &s.logger, s.config.WebRTCConfigOptions)
 	handler := sub.Signal()
 
 	server := s.newServer(handler)
