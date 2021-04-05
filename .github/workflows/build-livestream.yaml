@@ -48,7 +48,7 @@ jobs:
           ssh: github=ssh-key
           platforms: linux/amd64,linux/arm64
           context: .
-          file: docker/Dockerfile.livestream.dev
+          file: docker/Dockerfile.livestream
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
