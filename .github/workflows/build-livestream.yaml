@@ -55,8 +55,8 @@ jobs:
           platforms: linux/amd64
           file: docker/Dockerfile.livestream
           push: true
-          tags: ${{ steps.meta.outputs.tags }}-${{ steps.build-amd64.inputs.platforms }}
-          labels: ${{ steps.meta.outputs.labels }}-${{ steps.build-amd64.inputs.platforms }}
+          tags: ${{ steps.meta.outputs.tags }}-amd64
+          labels: ${{ steps.meta.outputs.labels }}-amd64
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
       - name: Build and push arm64
@@ -67,7 +67,7 @@ jobs:
           platforms: linux/arm64
           file: docker/Dockerfile.livestream
           push: true
-          tags: ${{ steps.meta.outputs.tags }}-${{ steps.build-arm64.inputs.platforms }}
-          labels: ${{ steps.meta.outputs.labels }}-${{ steps.build-arm64.inputs.platforms }}
+          tags: ${{ steps.meta.outputs.tags }}-arm64
+          labels: ${{ steps.meta.outputs.labels }}-arm64
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
