@@ -1,4 +1,4 @@
-name: Build livestream image
+name: Build container image
 on:
   workflow_dispatch:
   push:
@@ -8,27 +8,21 @@ on:
       - "v*"
 jobs:
   build:
-    name: Build livestream image
+    name: Build container image
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Docker meta
-        id: meta
+        id: docker_meta
         uses: crazy-max/ghaction-docker-meta@v2
         with:
           images: ghcr.io/sb-im/sphinx
           tags: |
-            type=edge,prefix=livestream-
-            type=ref,prefix=livestream-,event=branch
-            type=ref,prefix=livestream-,event=pr
-            type=semver,prefix=livestream-,pattern={{version}}
-            type=semver,prefix=livestream-,pattern={{major}}.{{minor}}
-            type=sha,prefix=livestream-
-          flavor: |
-            latest=true
-            prefix=livestream-
-            suffix=-arm64
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
@@ -44,16 +38,17 @@ jobs:
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
-          username: ${{ secrets.CONTAINER_USER }}
+          username: ${{ secrets.repository_owner }}
           password: ${{ secrets.CONTAINER_TOKEN }}
-      - name: Prepare ssh key
-        run: echo "${{ secrets.SSH_KEY }}" > ssh-key
       - name: Build and push
         uses: docker/build-push-action@v2
+        run: echo "${{ secrets.SSH_KEY }}" > /ssh-key
         with:
-          ssh: github=ssh-key
-          platforms: linux/arm64
-          file: docker/Dockerfile.livestream
+          ssh:
+            - /ssh-key
+          platforms: linux/amd64,linux/arm64
+          context: docker
+          file: Dockerfile.livestream
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
