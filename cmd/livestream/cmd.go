@@ -26,7 +26,7 @@ func Command() *cli.Command {
 		mc mqtt.Client
 
 		mqttConfigOptions   mqttclient.ConfigOptions
-		topicConfigOptions  livestream.TopicConfigOptions
+		topicConfigOptions  livestream.MQTTClientConfigOptions
 		webRTCConfigOptions livestream.WebRTCConfigOptions
 		rtpConfigOptions    livestream.RTPSourceConfigOptions
 		rtspConfigOptions   livestream.RTSPSourceConfigOptions
@@ -36,7 +36,7 @@ func Command() *cli.Command {
 		for _, v := range [][]cli.Flag{
 			loadConfigFlag(),
 			mqttFlags(&mqttConfigOptions),
-			topicFlags(&topicConfigOptions),
+			mqttClientFlags(&topicConfigOptions),
 			webRTCFlags(&webRTCConfigOptions),
 			rtpFlags(&rtpConfigOptions),
 			rtspFlags(&rtspConfigOptions),
@@ -75,13 +75,13 @@ func Command() *cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			// Publish live stream.
-			rtpStream := livestream.NewRTPPublisher(ctx, livestream.RTPBroadcastConfigOptions{
-				TopicConfigOptions:     topicConfigOptions,
-				WebRTCConfigOptions:    webRTCConfigOptions,
-				RTPSourceConfigOptions: rtpConfigOptions,
+			rtpStream := livestream.NewRTPPublisher(ctx, &livestream.RTPBroadcastConfigOptions{
+				MQTTClientConfigOptions: topicConfigOptions,
+				WebRTCConfigOptions:     webRTCConfigOptions,
+				RTPSourceConfigOptions:  rtpConfigOptions,
 			})
-			rtspStream := livestream.NewRTSPPublisher(ctx, livestream.RTSPBroadcastConfigOptions{
-				TopicConfigOptions:      topicConfigOptions,
+			rtspStream := livestream.NewRTSPPublisher(ctx, &livestream.RTSPBroadcastConfigOptions{
+				MQTTClientConfigOptions: topicConfigOptions,
 				WebRTCConfigOptions:     webRTCConfigOptions,
 				RTSPSourceConfigOptions: rtspConfigOptions,
 			})
@@ -155,7 +155,7 @@ func mqttFlags(mqttConfigOptions *mqttclient.ConfigOptions) []cli.Flag {
 	}
 }
 
-func topicFlags(topicConfigOptions *livestream.TopicConfigOptions) []cli.Flag {
+func mqttClientFlags(topicConfigOptions *livestream.MQTTClientConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "topic-offer",
@@ -165,11 +165,25 @@ func topicFlags(topicConfigOptions *livestream.TopicConfigOptions) []cli.Flag {
 			Destination: &topicConfigOptions.OfferTopic,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "topic-answer",
-			Usage:       "MQTT topic for WebRTC SDP answer signaling",
+			Name:        "topic-answer-prefix",
+			Usage:       "MQTT topic prefix for WebRTC SDP answer signaling",
 			Value:       "/edge/livestream/signal/answer",
 			DefaultText: "/edge/livestream/signal/answer",
-			Destination: &topicConfigOptions.AnswerTopic,
+			Destination: &topicConfigOptions.AnswerTopicPrefix,
+		}),
+		altsrc.NewUintFlag(&cli.UintFlag{
+			Name:        "qos",
+			Usage:       "MQTT client qos for WebRTC SDP signaling",
+			Value:       0,
+			DefaultText: "0",
+			Destination: &topicConfigOptions.Qos,
+		}),
+		altsrc.NewBoolFlag(&cli.BoolFlag{
+			Name:        "retained",
+			Usage:       "MQTT client setting retainsion for WebRTC SDP signaling",
+			Value:       false,
+			DefaultText: "false",
+			Destination: &topicConfigOptions.Retained,
 		}),
 	}
 }
@@ -182,6 +196,20 @@ func webRTCFlags(webRTCConfigOptions *livestream.WebRTCConfigOptions) []cli.Flag
 			Value:       "stun:stun.l.google.com:19302",
 			DefaultText: "stun:stun.l.google.com:19302",
 			Destination: &webRTCConfigOptions.ICEServer,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "ice-server-username",
+			Usage:       "ICE server username for webRTC",
+			Value:       "",
+			DefaultText: "",
+			Destination: &webRTCConfigOptions.Username,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "ice-server-credential",
+			Usage:       "ICE server credential for webRTC",
+			Value:       "",
+			DefaultText: "",
+			Destination: &webRTCConfigOptions.Credential,
 		}),
 	}
 }

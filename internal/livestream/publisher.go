@@ -63,7 +63,9 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 	peerConnection, err := webrtc.NewPeerConnection(webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			{
-				URLs: []string{p.config.ICEServer},
+				URLs:       []string{p.config.ICEServer},
+				Username:   p.config.Username,
+				Credential: p.config.Credential,
 			},
 		},
 	})

@@ -28,12 +28,12 @@ type Livestream interface {
 	TrackSource() pb.TrackSource
 }
 
-func NewRTPPublisher(ctx context.Context, configOptions RTPBroadcastConfigOptions) Livestream {
+func NewRTPPublisher(ctx context.Context, configOptions *RTPBroadcastConfigOptions) Livestream {
 	return &publisher{
 		id:          id,
 		trackSource: pb.TrackSource_DRONE,
 		config: broadcastConfigOptions{
-			configOptions.TopicConfigOptions,
+			configOptions.MQTTClientConfigOptions,
 			configOptions.WebRTCConfigOptions,
 		},
 		client:      mqttclient.FromContext(ctx),
@@ -46,12 +46,12 @@ func NewRTPPublisher(ctx context.Context, configOptions RTPBroadcastConfigOption
 	}
 }
 
-func NewRTSPPublisher(ctx context.Context, configOptions RTSPBroadcastConfigOptions) Livestream {
+func NewRTSPPublisher(ctx context.Context, configOptions *RTSPBroadcastConfigOptions) Livestream {
 	return &publisher{
 		id:          id,
 		trackSource: pb.TrackSource_MONITOR,
 		config: broadcastConfigOptions{
-			configOptions.TopicConfigOptions,
+			configOptions.MQTTClientConfigOptions,
 			configOptions.WebRTCConfigOptions,
 		},
 		client:      mqttclient.FromContext(ctx),

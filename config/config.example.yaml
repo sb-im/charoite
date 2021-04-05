@@ -4,12 +4,16 @@ mqtt-clientID: mqtt_edge
 mqtt-username: user
 mqtt-password: password
 
-# MQTT topics  for webRTC signaling config
+# MQTT client config for webRTC signaling
 topic-offer: /edge/livestream/signal/offer
-topic-answer: /edge/livestream/signal/answer
+topic-answer-prefix: /edge/livestream/signal/answer
+qos: 0
+retained: false
 
 # WebRTC config
 ice-server: stun:stun.l.google.com:19302
+ice-server-username: ""
+ice-server-credential: ""
 
 # RTP config
 rtp-host: 0.0.0.0

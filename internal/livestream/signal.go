@@ -16,7 +16,7 @@ func (p *publisher) sendOffer(sdp *webrtc.SessionDescription) error {
 	if err != nil {
 		return fmt.Errorf("could not encode sdp: %w", err)
 	}
-	t := p.client.Publish(p.config.OfferTopic, 1, true, payload)
+	t := p.client.Publish(p.config.OfferTopic, byte(p.config.Qos), p.config.Retained, payload)
 	// Handle the token in a go routine so this loop keeps sending messages regardless of delivery status
 	go func() {
 		<-t.Done()
@@ -31,9 +31,9 @@ func (p *publisher) sendOffer(sdp *webrtc.SessionDescription) error {
 // The caller must check if result in channel is nil.
 func (p *publisher) recvAnswer() <-chan *webrtc.SessionDescription {
 	ch := make(chan *webrtc.SessionDescription, 1)
-	topic := p.config.AnswerTopic + "/" + p.id + "/" + strconv.Itoa(int(p.trackSource))
+	topic := p.config.AnswerTopicPrefix + "/" + p.id + "/" + strconv.Itoa(int(p.trackSource))
 	// Receive remote description with MQTT.
-	t := p.client.Subscribe(topic, 1, func(c mqtt.Client, m mqtt.Message) {
+	t := p.client.Subscribe(topic, byte(p.config.Qos), func(c mqtt.Client, m mqtt.Message) {
 		defer func() {
 			c.Unsubscribe(topic)
 			// Close channel so receiver never block even if subscribe failed.

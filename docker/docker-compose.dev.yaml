@@ -11,7 +11,7 @@ services:
     environment:
       - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
     volumes:
-      - ../config/config.dev.yaml:/config/config.yaml
+      - ../config/config.docker.yaml:/config/config.yaml
       - /etc/machine-id:/etc/machine-id
     depends_on:
       - mosquitto
