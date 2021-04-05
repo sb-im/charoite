@@ -8,7 +8,7 @@ on:
       - "v*"
 jobs:
   build:
-    name: Build container image
+    name: Build livestream image
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
@@ -47,8 +47,8 @@ jobs:
         with:
           ssh: github=ssh-key
           platforms: linux/amd64,linux/arm64
-          context: docker
-          file: Dockerfile.livestream
+          context: .
+          file: Docker/Dockerfile.livestream
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
