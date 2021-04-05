@@ -19,10 +19,12 @@ jobs:
         with:
           images: ghcr.io/sb-im/sphinx
           tags: |
+            type=edge,prefix=livestream-
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+            type=sha
           flavor: |
             latest=auto
             prefix=livestream-
@@ -50,7 +52,6 @@ jobs:
         with:
           ssh: github=ssh-key
           platforms: linux/amd64,linux/arm64
-          context: .
           file: docker/Dockerfile.livestream
           push: true
           tags: ${{ steps.meta.outputs.tags }}
