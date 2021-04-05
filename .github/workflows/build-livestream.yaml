@@ -20,13 +20,13 @@ jobs:
           images: ghcr.io/sb-im/sphinx
           tags: |
             type=edge,prefix=livestream-
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha
+            type=ref,,prefix=livestream-,event=branch
+            type=ref,,prefix=livestream-,event=pr
+            type=semver,prefix=livestream-,pattern={{version}}
+            type=semver,,prefix=livestream-,pattern={{major}}.{{minor}}
+            type=sha,prefix=livestream-
           flavor: |
-            latest=auto
+            latest=true
             prefix=livestream-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
