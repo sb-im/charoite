@@ -19,7 +19,7 @@ import (
 type Publisher struct {
 	client mqtt.Client
 	logger zerolog.Logger
-	config cfg.PublisherConfigOptions
+	config *cfg.PublisherConfigOptions
 
 	// sessions must be created before used by publisher and is shared between publishers and subscribers.
 	// It's mainly written and maintained by publishers
@@ -31,7 +31,7 @@ func New(
 	client mqtt.Client,
 	sessions *sync.Map,
 	logger *zerolog.Logger,
-	config cfg.PublisherConfigOptions,
+	config *cfg.PublisherConfigOptions,
 ) *Publisher {
 	l := logger.With().Str("component", "Publisher").Logger()
 	return &Publisher{
@@ -47,7 +47,7 @@ func (p *Publisher) Signal() {
 	// The receiving topic is the same for each edge device, but message payload is different.
 	// The id and trackSource in payload determine the following publishing topic.
 	// Receive remote SDP with MQTT.
-	t := p.client.Subscribe(p.config.OfferTopic, 1, p.handleMessage())
+	t := p.client.Subscribe(p.config.OfferTopic, byte(p.config.Qos), p.handleMessage())
 	// the connection handler is called in a goroutine so blocking here would hot cause an issue. However as blocking
 	// in other handlers does cause problems its best to just assume we should not block
 	go func() {
@@ -74,7 +74,7 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 			Str("id", offer.Id).
 			Int32("track_source", int32(offer.TrackSource)).
 			Logger()
-		logger.Debug().Str("offer", offer.String()).Msg("received offer from edge")
+		logger.Debug().Msg("received offer from edge")
 
 		answer, videoTrack, err := p.signalPeerConnection(&offer, &logger)
 		if err != nil {
@@ -90,14 +90,14 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 		}
 
 		// The publishing topic is unique to each edge device and is determined by above receiving message payload.
-		answerTopic := p.config.AnswerTopic + "/" + offer.Id + "/" + strconv.Itoa(int(offer.TrackSource))
-		t := c.Publish(answerTopic, 1, true, payload)
+		answerTopic := p.config.AnswerTopicPrefix + "/" + offer.Id + "/" + strconv.Itoa(int(offer.TrackSource))
+		t := c.Publish(answerTopic, byte(p.config.Qos), p.config.Retained, payload)
 		<-t.Done()
 		if t.Error() != nil {
 			p.logger.Err(t.Error()).Msgf("could not publish to %s", answerTopic)
 			return
 		}
-		logger.Debug().Str("answer_topic", answerTopic).Str("answer", answer.String()).Msg("sent answer to edge")
+		logger.Debug().Str("answer_topic", answerTopic).Msg("sent answer to edge")
 
 		// Register session on signaling success.
 		p.registerSession(offer.Id, offer.TrackSource, videoTrack)
@@ -135,4 +135,5 @@ func (p *Publisher) registerSession(
 ) {
 	sessionID := id + strconv.Itoa(int(trackSource))
 	p.sessions.Store(sessionID, videoTrack)
+	p.logger.Debug().Str("key", sessionID).Int32("value", int32(trackSource)).Msg("registered session")
 }

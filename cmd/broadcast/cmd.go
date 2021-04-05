@@ -26,17 +26,17 @@ func Command() *cli.Command {
 
 		mc mqtt.Client
 
-		mqttConfigOptions   mqttclient.ConfigOptions
-		topicConfigOptions  cfg.TopicConfigOptions
-		webRTCConfigOptions cfg.WebRTCConfigOptions
-		serverConfigOptions cfg.ServerConfigOptions
+		mqttConfigOptions       mqttclient.ConfigOptions
+		mqttClientConfigOptions cfg.MQTTClientConfigOptions
+		webRTCConfigOptions     cfg.WebRTCConfigOptions
+		serverConfigOptions     cfg.ServerConfigOptions
 	)
 
 	flags := func() (flags []cli.Flag) {
 		for _, v := range [][]cli.Flag{
 			loadConfigFlag(),
 			mqttFlags(&mqttConfigOptions),
-			topicFlags(&topicConfigOptions),
+			mqttClientFlags(&mqttClientConfigOptions),
 			webRTCFlags(&webRTCConfigOptions),
 			serverFlags(&serverConfigOptions),
 		} {
@@ -73,9 +73,9 @@ func Command() *cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			svc := broadcast.New(ctx, &cfg.ConfigOptions{
-				WebRTCConfigOptions: webRTCConfigOptions,
-				TopicConfigOptions:  topicConfigOptions,
-				ServerConfigOptions: serverConfigOptions,
+				WebRTCConfigOptions:     webRTCConfigOptions,
+				MQTTClientConfigOptions: mqttClientConfigOptions,
+				ServerConfigOptions:     serverConfigOptions,
 			})
 			err := svc.Broadcast()
 			if err != nil {
@@ -136,7 +136,7 @@ func mqttFlags(mqttConfigOptions *mqttclient.ConfigOptions) []cli.Flag {
 	}
 }
 
-func topicFlags(topicConfigOptions *cfg.TopicConfigOptions) []cli.Flag {
+func mqttClientFlags(topicConfigOptions *cfg.MQTTClientConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "topic-offer",
@@ -146,11 +146,25 @@ func topicFlags(topicConfigOptions *cfg.TopicConfigOptions) []cli.Flag {
 			Destination: &topicConfigOptions.OfferTopic,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "topic-answer",
-			Usage:       "MQTT topic for WebRTC SDP answer signaling",
+			Name:        "topic-answer-prefix",
+			Usage:       "MQTT topic prefix for WebRTC SDP answer signaling",
 			Value:       "/edge/livestream/signal/answer",
 			DefaultText: "/edge/livestream/signal/answer",
-			Destination: &topicConfigOptions.AnswerTopic,
+			Destination: &topicConfigOptions.AnswerTopicPrefix,
+		}),
+		altsrc.NewUintFlag(&cli.UintFlag{
+			Name:        "qos",
+			Usage:       "MQTT client qos for WebRTC SDP signaling",
+			Value:       0,
+			DefaultText: "0",
+			Destination: &topicConfigOptions.Qos,
+		}),
+		altsrc.NewBoolFlag(&cli.BoolFlag{
+			Name:        "retained",
+			Usage:       "MQTT client setting retainsion for WebRTC SDP signaling",
+			Value:       false,
+			DefaultText: "false",
+			Destination: &topicConfigOptions.Retained,
 		}),
 	}
 }
@@ -163,6 +177,27 @@ func webRTCFlags(webRTCConfigOptions *cfg.WebRTCConfigOptions) []cli.Flag {
 			Value:       "stun:stun.l.google.com:19302",
 			DefaultText: "stun:stun.l.google.com:19302",
 			Destination: &webRTCConfigOptions.ICEServer,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "ice-server-username",
+			Usage:       "ICE server username",
+			Value:       "",
+			DefaultText: "",
+			Destination: &webRTCConfigOptions.Username,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "ice-server-credential",
+			Usage:       "ICE server credential",
+			Value:       "",
+			DefaultText: "",
+			Destination: &webRTCConfigOptions.Credential,
+		}),
+		altsrc.NewBoolFlag(&cli.BoolFlag{
+			Name:        "enable-frontend",
+			Usage:       "Enable webRTC frontend server",
+			Value:       false,
+			DefaultText: "false",
+			Destination: &webRTCConfigOptions.EnableFrontend,
 		}),
 	}
 }

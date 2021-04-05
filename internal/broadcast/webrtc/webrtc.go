@@ -150,7 +150,9 @@ func (w *WebRTC) newPeerConnection() (*webrtc.PeerConnection, error) {
 	return webrtc.NewPeerConnection(webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			{
-				URLs: []string{w.config.ICEServer},
+				URLs:       []string{w.config.ICEServer},
+				Username:   w.config.Username,
+				Credential: w.config.Credential,
 			},
 		},
 	})

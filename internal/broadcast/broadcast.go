@@ -34,9 +34,9 @@ func New(ctx context.Context, config *cfg.ConfigOptions) *Service {
 }
 
 func (s *Service) Broadcast() error {
-	pub := publisher.New(s.client, &s.sessions, &s.logger, cfg.PublisherConfigOptions{
-		TopicConfigOptions:  s.config.TopicConfigOptions,
-		WebRTCConfigOptions: s.config.WebRTCConfigOptions,
+	pub := publisher.New(s.client, &s.sessions, &s.logger, &cfg.PublisherConfigOptions{
+		MQTTClientConfigOptions: s.config.MQTTClientConfigOptions,
+		WebRTCConfigOptions:     s.config.WebRTCConfigOptions,
 	})
 	pub.Signal()
 

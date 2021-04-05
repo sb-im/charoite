@@ -11,7 +11,7 @@ services:
     environment:
       - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
     volumes:
-      - ../../sphinx/config/config.dev.yaml:/config/config.yaml
+      - ../../sphinx/config/config.docker.yaml:/config/config.yaml
       - /etc/machine-id:/etc/machine-id
     depends_on:
       - mosquitto
@@ -22,6 +22,7 @@ services:
     image: ghcr.io/sb-im/skywalker:broadcast-latest
     container_name: broadcast
     command:
+      - --debug
       - broadcast
       - -c
       - /config/config.yaml
@@ -31,7 +32,7 @@ services:
       - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
       - DEBUG=true
     volumes:
-      - ../config/config.dev.yaml:/config/config.yaml
+      - ../config/config.docker.yaml:/config/config.yaml
     depends_on:
       - mosquitto
     restart: on-failure

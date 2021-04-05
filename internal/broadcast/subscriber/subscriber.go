@@ -3,7 +3,6 @@ package subscriber
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 	"strconv"
 	"sync"
 
@@ -41,7 +40,7 @@ func (s *Subscriber) Signal() http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/v1/broadcast/signal", s.handleSignal()).Methods(http.MethodPost)
 
-	if os.Getenv("DEBUG") == "true" {
+	if s.config.EnableFrontend {
 		r.Handle("/", http.FileServer(http.Dir("e2e/broadcast/static")))
 	}
 	s.logger.Debug().Msg("registered signal HTTP handler")
