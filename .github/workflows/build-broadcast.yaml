@@ -1,4 +1,4 @@
-name: Build container image
+name: Build broadcast image
 on:
   workflow_dispatch:
   push:
@@ -8,18 +8,26 @@ on:
       - "v*"
 jobs:
   build:
-    name: Build container image
+    name: Build broadcast image
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Docker meta
-        id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v1
+        id: meta
+        uses: crazy-max/ghaction-docker-meta@v2
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/orchid
-          tag-sha: true
-          tag-custom: latest
+          images: ghcr.io/sb-im/skywalker
+          tags: |
+            type=edge,prefix=broadcast-
+            type=ref,prefix=broadcast-,event=branch
+            type=ref,prefix=broadcast-,event=pr
+            type=semver,prefix=broadcast-,pattern={{version}}
+            type=semver,prefix=broadcast-,pattern={{major}}.{{minor}}
+            type=sha,prefix=broadcast-
+          flavor: |
+            latest=true
+            prefix=broadcast-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
@@ -35,14 +43,17 @@ jobs:
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
-          username: ${{ secrets.GITHUB_USERNAME }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.CONTAINER_USER }}
+          password: ${{ secrets.CONTAINER_TOKEN }}
+      - name: Prepare ssh key
+        run: echo "${{ secrets.SSH_KEY }}" > ssh-key
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
-          platforms: linux/amd64,linux/arm64
+          ssh: github=ssh-key
+          file: docker/Dockerfile.broadcast
           push: true
-          tags: ${{ steps.docker_meta.outputs.tags }}
-          labels: ${{ steps.docker_meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
