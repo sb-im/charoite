@@ -2,6 +2,7 @@ package livestream
 
 import (
 	"fmt"
+	"sync"
 
 	pb "github.com/SB-IM/pb/signal"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -17,13 +18,17 @@ type publisher struct {
 	// trackSource is the source of video track, either drone or monitor.
 	trackSource pb.TrackSource
 
-	config       broadcastConfigOptions
-	client       mqtt.Client
+	config broadcastConfigOptions
+	client mqtt.Client
+
 	createTrack  func() (webrtc.TrackLocal, error)
 	streamSource func() string
 
 	// liveStream blocks indefinitely if there no error.
 	liveStream func(address string, videoTrack webrtc.TrackLocal, logger *zerolog.Logger) error
+
+	pendingCandidates []*webrtc.ICECandidate
+	candidatesMux     sync.Mutex
 
 	logger zerolog.Logger
 }
@@ -73,23 +78,35 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 		return fmt.Errorf("could not create PeerConnection: %w", err)
 	}
 
-	// A signal for ICE connection.
-	// iceConnectedCtx, iceConnectedCtxCancel := context.WithCancel(context.Background())
-
 	rtpSender, err := peerConnection.AddTrack(videoTrack)
 	if err != nil {
 		return fmt.Errorf("could not add track to PeerConnection: %w", err)
 	}
 	go p.processRTCP(rtpSender)
 
+	peerConnection.OnICECandidate(func(c *webrtc.ICECandidate) {
+		if c == nil {
+			return
+		}
+
+		p.candidatesMux.Lock()
+		defer p.candidatesMux.Unlock()
+
+		desc := peerConnection.RemoteDescription()
+		if desc == nil {
+			p.pendingCandidates = append(p.pendingCandidates, c)
+			return
+		}
+		if err = p.sendCandidate(c); err != nil {
+			p.logger.Err(err).Msg("could not send candidate")
+		}
+		p.logger.Debug().Msg("sent an ICEcandidate")
+	})
+
 	// Set the handler for ICE connection state
 	// This will notify you when the peer has connected/disconnected
 	peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		p.logger.Debug().Str("state", connectionState.String()).Msg("connection state has changed")
-
-		// if connectionState == webrtc.ICEConnectionStateConnected {
-		// 	iceConnectedCtxCancel()
-		// }
 
 		if connectionState == webrtc.ICEConnectionStateFailed {
 			if err = peerConnection.Close(); err != nil {
@@ -104,17 +121,16 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 		return fmt.Errorf("could not create offer: %w", err)
 	}
 
-	gatherComplete := webrtc.GatheringCompletePromise(peerConnection)
 	if err = peerConnection.SetLocalDescription(offer); err != nil {
 		return fmt.Errorf("could not set local description: %w", err)
 	}
-	<-gatherComplete
 
 	if err := p.sendOffer(peerConnection.LocalDescription()); err != nil {
 		return fmt.Errorf("could not send offer: %w", err)
 	}
 	p.logger.Debug().Msg("sent local description offer")
 
+	// TODO: Timeout channel receiving to avoid blocking.
 	answer := <-p.recvAnswer()
 	if answer == nil {
 		return nil
@@ -124,7 +140,38 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 	}
 	p.logger.Debug().Msg("received remote answer from cloud")
 
+	// Signal candidate after setting remote description.
+	go p.signalCandidate(peerConnection)
+
+	// Signal candidate
+	p.candidatesMux.Lock()
+	defer p.candidatesMux.Unlock()
+
+	for _, c := range p.pendingCandidates {
+		if err := p.sendCandidate(c); err != nil {
+			return fmt.Errorf("could not send candidate: %w", err)
+		}
+		p.logger.Debug().Msg("sent an ICEcandidate")
+	}
+
 	return nil
+}
+
+func (p *publisher) signalCandidate(peerConnection *webrtc.PeerConnection) {
+	// TODO: Stop adding ICE candidate when after signaling succeeded, that is, to exit the loop.
+	// Just set a timer is not enough.
+	ch := p.recvCandidate()
+	for c := range ch {
+		if c == nil {
+			continue
+		}
+		if err := peerConnection.AddICECandidate(webrtc.ICECandidateInit{
+			Candidate: c.ToJSON().Candidate,
+		}); err != nil {
+			p.logger.Err(err).Msg("could not add ICE candidate")
+		}
+		p.logger.Debug().Msg("successfully added an ICE candidate")
+	}
 }
 
 // processRTCP reads incoming RTCP packets
