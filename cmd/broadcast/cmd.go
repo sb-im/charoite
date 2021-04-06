@@ -146,11 +146,25 @@ func mqttClientFlags(topicConfigOptions *cfg.MQTTClientConfigOptions) []cli.Flag
 			Destination: &topicConfigOptions.OfferTopic,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "topic-answer-prefix",
-			Usage:       "MQTT topic prefix for WebRTC SDP answer signaling",
+			Name:        "topic-answer-suffix",
+			Usage:       "MQTT topic suffix for WebRTC SDP answer signaling",
 			Value:       "/edge/livestream/signal/answer",
 			DefaultText: "/edge/livestream/signal/answer",
-			Destination: &topicConfigOptions.AnswerTopicPrefix,
+			Destination: &topicConfigOptions.AnswerTopicSuffix,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "topic-candidate-send-suffix",
+			Usage:       "MQTT topic suffix for WebRTC candidate sending, and the sending topic of edge is /edge/livestream/signal/candidate/send",
+			Value:       "/edge/livestream/signal/candidate/recv",
+			DefaultText: "/edge/livestream/signal/candidate/recv",
+			Destination: &topicConfigOptions.CandidateSendTopicSuffix,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "topic-candidate-recv-suffix",
+			Usage:       "MQTT topic suffix for WebRTC candidate receiving, and the receiving topic of edge is /edge/livestream/signal/candidate/recv",
+			Value:       "/edge/livestream/signal/candidate/send",
+			DefaultText: "/edge/livestream/signal/candidate/send",
+			Destination: &topicConfigOptions.CandidateRecvTopicSuffix,
 		}),
 		altsrc.NewUintFlag(&cli.UintFlag{
 			Name:        "qos",

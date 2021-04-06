@@ -67,7 +67,7 @@ func (s *Subscriber) handleSignal() http.HandlerFunc {
 			return
 		}
 
-		wcx := webrtcx.New(s.config, &logger)
+		wcx := webrtcx.New(s.config, &logger, nil, nil)
 		// TODO: handle blocking case with timeout for channels.
 		wcx.OfferChan <- &offer
 		if err := wcx.CreateSubscriber(value.(*webrtc.TrackLocalStaticRTP)); err != nil {
@@ -77,6 +77,7 @@ func (s *Subscriber) handleSignal() http.HandlerFunc {
 		}
 		logger.Debug().Msg("successfully created subscriber")
 
+		// TODO: Timeout channel receiving to avoid blocking.
 		answer := <-wcx.AnswerChan
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(answer.Sdp); err != nil {

@@ -60,6 +60,59 @@ func (p *Publisher) Signal() {
 	}()
 }
 
+// sendCandidate sends candidate to remote webRTC peer via MQTT.
+// The publish topic is unique to this edge device.
+func (p *Publisher) sendCandidate(id string, trackSource pb.TrackSource) webrtcx.SendCandidateFunc {
+	return func(candidate *webrtc.ICECandidate) error {
+		payload, err := encodeCandidate(candidate)
+		if err != nil {
+			return fmt.Errorf("could not encode candidate: %w", err)
+		}
+		topic := p.config.CandidateSendTopicSuffix + "/" + id + "/" + strconv.Itoa(int(trackSource))
+		t := p.client.Publish(topic, byte(p.config.Qos), p.config.Retained, payload)
+		// Handle the token in a go routine so this loop keeps sending messages regardless of delivery status
+		go func() {
+			<-t.Done()
+			if t.Error() != nil {
+				p.logger.Err(t.Error()).Msgf("could not publish to %s", p.config.CandidateSendTopicSuffix)
+			}
+		}()
+		return nil
+	}
+}
+
+// recvCandidate is not a one time subscriber.
+// The caller must check if result in channel is nil.
+// sendCandidate receive candidate from remote webRTC peer via MQTT.
+// The subscription topic is unique to this edge device.
+func (p *Publisher) recvCandidate(id string, trackSource pb.TrackSource) webrtcx.RecvCandidateFunc {
+	return func() <-chan *webrtc.ICECandidate {
+		// TODO: Figure how to properly close channel.
+		ch := make(chan *webrtc.ICECandidate, 2) // Make buffer 2 because we have at least 2 sendings.
+		topic := p.config.CandidateRecvTopicSuffix + "/" + id + "/" + strconv.Itoa(int(trackSource))
+		// Receive remote ICE candidate with MQTT.
+		t := p.client.Subscribe(topic, byte(p.config.Qos), func(c mqtt.Client, m mqtt.Message) {
+			candidate, err := decodeCandidate(m.Payload())
+			if err != nil {
+				p.logger.Err(err).Msg("could not decode candidate")
+				return
+			}
+			ch <- candidate
+		})
+		// the connection handler is called in a goroutine so blocking here would hot cause an issue. However as blocking
+		// in other handlers does cause problems its best to just assume we should not block
+		go func() {
+			<-t.Done()
+			if t.Error() != nil {
+				p.logger.Err(t.Error()).Msgf("could not subscribe to %s", topic)
+			} else {
+				p.logger.Info().Msgf("subscribed to %s", topic)
+			}
+		}()
+		return ch
+	}
+}
+
 // handleMessage handles MQTT subscription message.
 func (p *Publisher) handleMessage() mqtt.MessageHandler {
 	return func(c mqtt.Client, m mqtt.Message) {
@@ -90,7 +143,7 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 		}
 
 		// The publishing topic is unique to each edge device and is determined by above receiving message payload.
-		answerTopic := p.config.AnswerTopicPrefix + "/" + offer.Id + "/" + strconv.Itoa(int(offer.TrackSource))
+		answerTopic := p.config.AnswerTopicSuffix + "/" + offer.Id + "/" + strconv.Itoa(int(offer.TrackSource))
 		t := c.Publish(answerTopic, byte(p.config.Qos), p.config.Retained, payload)
 		<-t.Done()
 		if t.Error() != nil {
@@ -116,7 +169,12 @@ func (p *Publisher) signalPeerConnection(offer *pb.SessionDescription, logger *z
 	}
 	logger.Debug().Msg("created video track")
 
-	w := webrtcx.New(p.config.WebRTCConfigOptions, logger)
+	w := webrtcx.New(
+		p.config.WebRTCConfigOptions,
+		logger,
+		p.sendCandidate(offer.Id, offer.TrackSource),
+		p.recvCandidate(offer.Id, offer.TrackSource),
+	)
 
 	// TODO: handle blocking case with timeout for channels.
 	w.OfferChan <- offer
@@ -136,4 +194,39 @@ func (p *Publisher) registerSession(
 	sessionID := id + strconv.Itoa(int(trackSource))
 	p.sessions.Store(sessionID, videoTrack)
 	p.logger.Debug().Str("key", sessionID).Int32("value", int32(trackSource)).Msg("registered session")
+}
+
+func encodeCandidate(candidate *webrtc.ICECandidate) ([]byte, error) {
+	msg := pb.ICECandidate{
+		Foundation:     candidate.Foundation,
+		Priority:       candidate.Priority,
+		Address:        candidate.Address,
+		Protocol:       int32(candidate.Protocol),
+		Port:           uint32(candidate.Port),
+		Type:           int32(candidate.Typ),
+		Component:      uint32(candidate.Typ),
+		RelatedAddress: candidate.RelatedAddress,
+		RelatedPort:    uint32(candidate.RelatedPort),
+		TcpType:        candidate.TCPType,
+	}
+	return proto.Marshal(&msg)
+}
+
+func decodeCandidate(payload []byte) (*webrtc.ICECandidate, error) {
+	var candidate pb.ICECandidate
+	if err := proto.Unmarshal(payload, &candidate); err != nil {
+		return nil, err
+	}
+	return &webrtc.ICECandidate{
+		Foundation:     candidate.Foundation,
+		Priority:       candidate.Priority,
+		Address:        candidate.Address,
+		Protocol:       webrtc.ICEProtocol(candidate.Protocol),
+		Port:           uint16(candidate.Port),
+		Typ:            webrtc.ICECandidateType(candidate.Type),
+		Component:      uint16(candidate.Component),
+		RelatedAddress: candidate.RelatedAddress,
+		RelatedPort:    uint16(candidate.RelatedPort),
+		TCPType:        candidate.TcpType,
+	}, nil
 }

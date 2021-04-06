@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/SB-IM/logging v0.2.2
 	github.com/SB-IM/mqtt-client v0.1.0
-	github.com/SB-IM/pb v0.1.3
+	github.com/SB-IM/pb v0.1.4
 	github.com/eclipse/paho.mqtt.golang v1.3.3
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0

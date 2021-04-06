@@ -29,7 +29,7 @@ up: down image
 
 .PHONY: down
 down:
-	@docker-compose -f docker/docker-compose.dev.yaml down
+	@docker-compose -f docker/docker-compose.dev.yaml down --remove-orphans
 
 .PHONY: broker
 broker:

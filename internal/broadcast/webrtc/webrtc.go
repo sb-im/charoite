@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync"
 	"time"
 
 	pb "github.com/SB-IM/pb/signal"
@@ -15,24 +16,39 @@ import (
 	"github.com/SB-IM/skywalker/internal/broadcast/cfg"
 )
 
+// SendCandidateFunc sends a candidate to remote webRTC peer.
+type SendCandidateFunc func(candidate *webrtc.ICECandidate) error
+
+// SendCandidateFunc receives a candidate from remote webRTC peer.
+type RecvCandidateFunc func() <-chan *webrtc.ICECandidate
+
 const (
 	rtcpPLIInterval = time.Second * 3
 )
 
 type WebRTC struct {
-	logger     zerolog.Logger
-	config     cfg.WebRTCConfigOptions
+	logger zerolog.Logger
+	config cfg.WebRTCConfigOptions
+
 	OfferChan  chan *pb.SessionDescription
 	AnswerChan chan *pb.SessionDescription
+
+	pendingCandidates []*webrtc.ICECandidate
+	candidatesMux     sync.Mutex
+
+	sendCandidate SendCandidateFunc
+	recvCandidate RecvCandidateFunc
 }
 
 // New returns a new WebRTC.
-func New(config cfg.WebRTCConfigOptions, logger *zerolog.Logger) *WebRTC {
+func New(config cfg.WebRTCConfigOptions, logger *zerolog.Logger, sendCandidate SendCandidateFunc, recvCandidate RecvCandidateFunc) *WebRTC {
 	return &WebRTC{
-		logger:     *logger,
-		config:     config,
-		OfferChan:  make(chan *pb.SessionDescription, 1), // Make 1 buffer so offer sending never blocks
-		AnswerChan: make(chan *pb.SessionDescription, 1), // Make 1 buffer so answer sending never blocks
+		logger:        *logger,
+		config:        config,
+		OfferChan:     make(chan *pb.SessionDescription, 1), // Make 1 buffer so offer sending never blocks
+		AnswerChan:    make(chan *pb.SessionDescription, 1), // Make 1 buffer so answer sending never blocks
+		sendCandidate: sendCandidate,
+		recvCandidate: recvCandidate,
 	}
 }
 
@@ -105,6 +121,24 @@ func (w *WebRTC) CreateSubscriber(videoTrack *webrtc.TrackLocalStaticRTP) error 
 func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) error {
 	offer := <-w.OfferChan
 
+	peerConnection.OnICECandidate(func(c *webrtc.ICECandidate) {
+		if c == nil {
+			return
+		}
+		w.candidatesMux.Lock()
+		defer w.candidatesMux.Unlock()
+
+		desc := peerConnection.RemoteDescription()
+		if desc == nil {
+			w.pendingCandidates = append(w.pendingCandidates, c)
+			return
+		}
+		if err := w.sendCandidate(c); err != nil {
+			w.logger.Err(err).Msg("could not send candidate")
+		}
+		w.logger.Debug().Msg("sent an ICEcandidate")
+	})
+
 	// Set the handler for ICE connection state
 	// This will notify you when the peer has connected/disconnected
 	peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
@@ -121,8 +155,8 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 		return fmt.Errorf("could not set remote description: %w", err)
 	}
 
-	// Create channel that is blocked until ICE Gathering is complete
-	gatherComplete := webrtc.GatheringCompletePromise(peerConnection)
+	// Signal candidate after setting remote description.
+	go w.signalCandidate(peerConnection)
 
 	answer, err := peerConnection.CreateAnswer(nil)
 	if err != nil {
@@ -133,15 +167,21 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 		return fmt.Errorf("could not set local description: %w", err)
 	}
 
-	// Block until ICE Gathering is complete, disabling trickle ICE
-	// we do this because we only can exchange one signaling message
-	// in a production application you should exchange ICE Candidates via OnICECandidate
-	<-gatherComplete
-
 	// Send answer of local description.
 	// This is a universal answer for both publisher and subscriber in protobuf format.
 	sdp := webrtcSdp2pbSdp(peerConnection.LocalDescription())
 	w.AnswerChan <- sdp
+
+	// Signal candidate
+	w.candidatesMux.Lock()
+	defer w.candidatesMux.Unlock()
+
+	for _, c := range w.pendingCandidates {
+		if err := w.sendCandidate(c); err != nil {
+			return fmt.Errorf("could not send candidate: %w", err)
+		}
+		w.logger.Debug().Msg("sent an ICEcandidate")
+	}
 
 	return nil
 }
@@ -156,6 +196,23 @@ func (w *WebRTC) newPeerConnection() (*webrtc.PeerConnection, error) {
 			},
 		},
 	})
+}
+
+func (w *WebRTC) signalCandidate(peerConnection *webrtc.PeerConnection) {
+	// TODO: Stop adding ICE candidate when after signaling succeeded, that is, to exit the loop.
+	// Just set a timer is not enough.
+	ch := w.recvCandidate()
+	for c := range ch {
+		if c == nil {
+			continue
+		}
+		if err := peerConnection.AddICECandidate(webrtc.ICECandidateInit{
+			Candidate: c.ToJSON().Candidate,
+		}); err != nil {
+			w.logger.Err(err).Msg("could not add ICE candidate")
+		}
+		w.logger.Debug().Msg("successfully added an ICE candidate")
+	}
 }
 
 // sendRTCP sends a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval

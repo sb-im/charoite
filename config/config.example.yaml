@@ -6,7 +6,11 @@ mqtt-password: password
 
 # MQTT client config for webRTC signaling
 topic-offer: /edge/livestream/signal/offer
-topic-answer-prefix: /edge/livestream/signal/answer
+topic-answer-suffix: /edge/livestream/signal/answer
+# topic-candidate-send is opposite to edge's topic-candidate-recv-suffix topic
+topic-candidate-send-suffix: /edge/livestream/signal/candidate/recv
+# topic-candidate-recv-suffix is opposite to edge's topic-candidate-send-suffix topic
+topic-candidate-recv-suffix: /edge/livestream/signal/candidate/send
 qos: 0
 retained: false
 
@@ -16,6 +20,6 @@ ice-server-username: ""
 ice-server-credential: ""
 enable-frontend: false
 
-# WebSocket config
-ws-host: 0.0.0.0
-ws-port: 8080
+# Signal server config
+host: 0.0.0.0
+port: 8080
