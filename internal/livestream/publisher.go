@@ -12,11 +12,8 @@ import (
 
 // publisher implements Livestream interface.
 type publisher struct {
-	// id is an unique id for this publisher which is bound to OS's machine id.
-	id string
-
-	// trackSource is the source of video track, either drone or monitor.
-	trackSource pb.TrackSource
+	// meta contains id and track source of this publisher.
+	meta *pb.Meta
 
 	config broadcastConfigOptions
 	client mqtt.Client
@@ -34,7 +31,7 @@ type publisher struct {
 }
 
 func (p *publisher) Publish() error {
-	p.logger = p.logger.With().Str("id", p.id).Int32("track_source", int32(p.trackSource)).Logger()
+	p.logger = p.logger.With().Str("id", p.meta.Id).Int32("track_source", int32(p.meta.TrackSource)).Logger()
 	p.logger.Info().Msg("publishing stream")
 
 	videoTrack, err := p.createTrack()
@@ -56,12 +53,8 @@ func (p *publisher) Publish() error {
 	return nil
 }
 
-func (p *publisher) ID() string {
-	return p.id
-}
-
-func (p *publisher) TrackSource() pb.TrackSource {
-	return p.trackSource
+func (p *publisher) Meta() *pb.Meta {
+	return p.meta
 }
 
 func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
@@ -162,11 +155,8 @@ func (p *publisher) signalCandidate(peerConnection *webrtc.PeerConnection) {
 	// Just set a timer is not enough.
 	ch := p.recvCandidate()
 	for c := range ch {
-		if c == nil {
-			continue
-		}
 		if err := peerConnection.AddICECandidate(webrtc.ICECandidateInit{
-			Candidate: c.ToJSON().Candidate,
+			Candidate: c,
 		}); err != nil {
 			p.logger.Err(err).Msg("could not add ICE candidate")
 		}
@@ -192,7 +182,7 @@ func (p *publisher) processRTCP(rtpSender *webrtc.RTPSender) {
 func videoTrackRTP() (webrtc.TrackLocal, error) {
 	videoTrack, err := webrtc.NewTrackLocalStaticRTP(
 		webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264},
-		"video",
+		"video_drone",
 		"edge_drone",
 	)
 	if err != nil {

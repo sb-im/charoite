@@ -92,8 +92,8 @@ func Command() *cli.Command {
 				go func() {
 					if err := s.Publish(); err != nil {
 						logger.Err(err).
-							Str("id", s.ID()).
-							Int32("track_source", int32(s.TrackSource())).
+							Str("id", s.Meta().Id).
+							Int32("track_source", int32(s.Meta().TrackSource)).
 							Msg(
 								"live stream publishing failed")
 						errChan <- err
@@ -180,7 +180,7 @@ func mqttClientFlags(topicConfigOptions *livestream.MQTTClientConfigOptions) []c
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "topic-candidate-recv-suffix",
-			Usage:       "MQTT topic suffix for WebRTC candidate receiving, and the receiving topic of cloud is /edge/livestream/signal/candidate/send",
+			Usage:       "MQTT topic suffix for WebRTC candidate receiving, and the receiving topic of cloud is /edge/livestream/signal/candidate/send", //nolint:lll
 			Value:       "/edge/livestream/signal/candidate/recv",
 			DefaultText: "/edge/livestream/signal/candidate/recv",
 			Destination: &topicConfigOptions.CandidateRecvTopicSuffix,

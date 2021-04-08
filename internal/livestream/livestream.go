@@ -3,6 +3,7 @@ package livestream
 import (
 	"bytes"
 	"context"
+	"os"
 	"strconv"
 
 	mqttclient "github.com/SB-IM/mqtt-client"
@@ -24,14 +25,15 @@ func init() {
 // or pulls RTSP stream from a RTSP server. The underlining transportation is WebRTC.
 type Livestream interface {
 	Publish() error
-	ID() string
-	TrackSource() pb.TrackSource
+	Meta() *pb.Meta
 }
 
 func NewRTPPublisher(ctx context.Context, configOptions *RTPBroadcastConfigOptions) Livestream {
 	return &publisher{
-		id:          id,
-		trackSource: pb.TrackSource_DRONE,
+		meta: &pb.Meta{
+			Id:          id,
+			TrackSource: pb.TrackSource_DRONE,
+		},
 		config: broadcastConfigOptions{
 			configOptions.MQTTClientConfigOptions,
 			configOptions.WebRTCConfigOptions,
@@ -48,8 +50,10 @@ func NewRTPPublisher(ctx context.Context, configOptions *RTPBroadcastConfigOptio
 
 func NewRTSPPublisher(ctx context.Context, configOptions *RTSPBroadcastConfigOptions) Livestream {
 	return &publisher{
-		id:          id,
-		trackSource: pb.TrackSource_MONITOR,
+		meta: &pb.Meta{
+			Id:          id,
+			TrackSource: pb.TrackSource_MONITOR,
+		},
 		config: broadcastConfigOptions{
 			configOptions.MQTTClientConfigOptions,
 			configOptions.WebRTCConfigOptions,
@@ -62,4 +66,8 @@ func NewRTSPPublisher(ctx context.Context, configOptions *RTSPBroadcastConfigOpt
 		liveStream: consumeRTSP,
 		logger:     *log.Ctx(ctx),
 	}
+}
+
+func machineID() ([]byte, error) {
+	return os.ReadFile("/etc/machine-id")
 }
