@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/SB-IM/pb/signal"
 	"github.com/google/uuid"
 	"github.com/pion/rtcp"
 	"github.com/pion/webrtc/v3"
@@ -20,7 +19,7 @@ import (
 type SendCandidateFunc func(candidate *webrtc.ICECandidate) error
 
 // SendCandidateFunc receives a candidate from remote webRTC peer.
-type RecvCandidateFunc func() <-chan *webrtc.ICECandidate
+type RecvCandidateFunc func() <-chan string
 
 const (
 	rtcpPLIInterval = time.Second * 3
@@ -30,8 +29,8 @@ type WebRTC struct {
 	logger zerolog.Logger
 	config cfg.WebRTCConfigOptions
 
-	OfferChan  chan *pb.SessionDescription
-	AnswerChan chan *pb.SessionDescription
+	// SignalChan is a biderection channel.
+	SignalChan chan *webrtc.SessionDescription
 
 	pendingCandidates []*webrtc.ICECandidate
 	candidatesMux     sync.Mutex
@@ -45,8 +44,7 @@ func New(config cfg.WebRTCConfigOptions, logger *zerolog.Logger, sendCandidate S
 	return &WebRTC{
 		logger:        *logger,
 		config:        config,
-		OfferChan:     make(chan *pb.SessionDescription, 1), // Make 1 buffer so offer sending never blocks
-		AnswerChan:    make(chan *pb.SessionDescription, 1), // Make 1 buffer so answer sending never blocks
+		SignalChan:    make(chan *webrtc.SessionDescription, 1), // Make 1 buffer so SDP signaling never blocks
 		sendCandidate: sendCandidate,
 		recvCandidate: recvCandidate,
 	}
@@ -119,7 +117,7 @@ func (w *WebRTC) CreateSubscriber(videoTrack *webrtc.TrackLocalStaticRTP) error 
 }
 
 func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) error {
-	offer := <-w.OfferChan
+	offer := <-w.SignalChan
 
 	peerConnection.OnICECandidate(func(c *webrtc.ICECandidate) {
 		if c == nil {
@@ -151,7 +149,7 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 		}
 	})
 
-	if err := peerConnection.SetRemoteDescription(pbSdp2webrtcSdp(offer)); err != nil {
+	if err := peerConnection.SetRemoteDescription(*offer); err != nil {
 		return fmt.Errorf("could not set remote description: %w", err)
 	}
 
@@ -169,8 +167,7 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 
 	// Send answer of local description.
 	// This is a universal answer for both publisher and subscriber in protobuf format.
-	sdp := webrtcSdp2pbSdp(peerConnection.LocalDescription())
-	w.AnswerChan <- sdp
+	w.SignalChan <- peerConnection.LocalDescription()
 
 	// Signal candidate
 	w.candidatesMux.Lock()
@@ -203,11 +200,8 @@ func (w *WebRTC) signalCandidate(peerConnection *webrtc.PeerConnection) {
 	// Just set a timer is not enough.
 	ch := w.recvCandidate()
 	for c := range ch {
-		if c == nil {
-			continue
-		}
 		if err := peerConnection.AddICECandidate(webrtc.ICECandidateInit{
-			Candidate: c.ToJSON().Candidate,
+			Candidate: c,
 		}); err != nil {
 			w.logger.Err(err).Msg("could not add ICE candidate")
 		}
@@ -243,18 +237,14 @@ func (w *WebRTC) processRTCP(rtpSender *webrtc.RTPSender) {
 	}
 }
 
-func pbSdp2webrtcSdp(sdp *pb.SessionDescription) webrtc.SessionDescription {
-	return webrtc.SessionDescription{
-		Type: webrtc.NewSDPType(sdp.Sdp.Type),
-		SDP:  sdp.Sdp.Sdp,
-	}
+// NoopSendCandidateFunc does nothing.
+func NoopSendCandidateFunc(candidate *webrtc.ICECandidate) error {
+	return nil
 }
 
-func webrtcSdp2pbSdp(sdp *webrtc.SessionDescription) *pb.SessionDescription {
-	return &pb.SessionDescription{
-		Sdp: &pb.SDP{
-			Type: sdp.Type.String(),
-			Sdp:  sdp.SDP,
-		},
-	}
+// NoopRecvCandidateFunc does nothing.
+func NoopRecvCandidateFunc() <-chan string {
+	ch := make(chan string)
+	close(ch)
+	return ch
 }

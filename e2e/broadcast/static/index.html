@@ -14,53 +14,101 @@
 </body>
 
 <script type="text/javascript">
-    for (let i = 0; i < 2; i++) {
-        let pc = new RTCPeerConnection({
-            iceServers: [
-                {
-                    urls: "stun:stun.l.google.com:19302",
-                }
-            ]
-        })
-        pc.ontrack = function (event) {
-            var el = document.createElement(event.track.kind)
-            el.srcObject = event.streams[0]
-            el.autoplay = true
-            el.controls = true
+    const conn = new WebSocket(`ws://${location.host}/v1/broadcast/signal`)
 
-            document.getElementById('remoteVideos').appendChild(el)
+    let pc = new RTCPeerConnection()
+    pc.ontrack = function (event) {
+        var el = document.createElement(event.track.kind)
+        el.srcObject = event.streams[0]
+        el.autoplay = true
+        el.controls = true
+
+        document.getElementById('remoteVideos').appendChild(el)
+    }
+
+    let log = (msg) => {
+        document.getElementById("log1").innerHTML += msg + "<br>";
+    };
+
+    pc.addTransceiver('video');
+
+    pc.oniceconnectionstatechange = (e) => log(pc.iceConnectionState);
+
+    pc.onicecandidate = (e) => {
+        if (!e.candidate) {
+            return
         }
 
-        let log = (msg) => {
-            document.getElementById(`log${i + 1}`).innerHTML += msg + "<br>";
-        };
+        let msg = {
+            event: "new-ice-candidate",
+            data: {
+                meta: {
+                    id: "fa955cc6881b4b45b49ffbf2d81e7223",
+                    track_source: 1,
+                },
+                candidate: JSON.stringify(e.candidate)
+            }
+        }
+        conn.send(JSON.stringify(msg))
+    }
 
-        pc.addTransceiver('video');
-
-        pc.oniceconnectionstatechange = (e) => log(pc.iceConnectionState);
+    conn.addEventListener("close", ev => {
+        console.log(`WebSocket Disconnected code: ${ev.code}, reason: ${ev.reason}`)
+    })
+    conn.addEventListener("open", ev => {
+        console.info("websocket connected")
 
         pc.createOffer()
             .then(offer => {
-                pc.setLocalDescription(offer)
+                pc.setLocalDescription(offer).catch(console)
 
-                sdp = {
-                    id: "fa955cc6881b4b45b49ffbf2d81e7223",
-                    track_source: i,
-                    sdp: offer,
-                };
-                return fetch(`/v1/broadcast/signal`, {
-                    method: 'post',
-                    headers: {
-                        'Accept': 'application/json, text/plain, */*',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(sdp)
-                })
+                let msg = {
+                    event: "video-offer",
+                    data: {
+                        meta: {
+                            id: "fa955cc6881b4b45b49ffbf2d81e7223",
+                            track_source: 1,
+                        },
+                        sdp: JSON.stringify(offer),
+                    }
+                }
+                conn.send(JSON.stringify(msg))
             })
-            .then(res => res.json())
-            .then(res => pc.setRemoteDescription(res))
-            .catch(alert)
-    }
+            .catch(console);
+        console.log("sent offer")
+    })
+
+    conn.addEventListener("message", ev => {
+        console.log(`received message: ${ev.data}`)
+
+        let msg = JSON.parse(ev.data);
+        if (!msg) {
+            return console.log('failed to parse msg')
+        }
+        switch (msg.event) {
+            case "video-answer":
+                let answer = JSON.parse(msg.data.sdp)
+                if (!answer) {
+                    return console.log('failed to parse answer')
+                }
+                pc.setRemoteDescription(answer).catch(console)
+
+                console.log("set remote description")
+                break;
+            case "new-ice-candidate":
+                let candidate = JSON.parse(msg.data.candidate)
+                if (!candidate) {
+                    return console.log('failed to parse candidate')
+                }
+                pc.addIceCandidate(candidate).catch(console)
+
+                console.log("added a candidate")
+                break;
+            default:
+                break;
+        }
+    })
+
 </script>
 
 </html>

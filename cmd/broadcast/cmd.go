@@ -161,7 +161,7 @@ func mqttClientFlags(topicConfigOptions *cfg.MQTTClientConfigOptions) []cli.Flag
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "topic-candidate-recv-suffix",
-			Usage:       "MQTT topic suffix for WebRTC candidate receiving, and the receiving topic of edge is /edge/livestream/signal/candidate/recv",
+			Usage:       "MQTT topic suffix for WebRTC candidate receiving, and the receiving topic of edge is /edge/livestream/signal/candidate/recv", //nolint:lll
 			Value:       "/edge/livestream/signal/candidate/send",
 			DefaultText: "/edge/livestream/signal/candidate/send",
 			Destination: &topicConfigOptions.CandidateRecvTopicSuffix,

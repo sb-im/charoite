@@ -1,6 +1,7 @@
 package publisher
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"sync"
@@ -62,13 +63,13 @@ func (p *Publisher) Signal() {
 
 // sendCandidate sends candidate to remote webRTC peer via MQTT.
 // The publish topic is unique to this edge device.
-func (p *Publisher) sendCandidate(id string, trackSource pb.TrackSource) webrtcx.SendCandidateFunc {
+func (p *Publisher) sendCandidate(meta *pb.Meta) webrtcx.SendCandidateFunc {
 	return func(candidate *webrtc.ICECandidate) error {
-		payload, err := encodeCandidate(candidate)
+		payload, err := pb.EncodeCandidate(candidate)
 		if err != nil {
 			return fmt.Errorf("could not encode candidate: %w", err)
 		}
-		topic := p.config.CandidateSendTopicSuffix + "/" + id + "/" + strconv.Itoa(int(trackSource))
+		topic := p.config.CandidateSendTopicSuffix + "/" + meta.Id + "/" + strconv.Itoa(int(meta.TrackSource))
 		t := p.client.Publish(topic, byte(p.config.Qos), p.config.Retained, payload)
 		// Handle the token in a go routine so this loop keeps sending messages regardless of delivery status
 		go func() {
@@ -85,14 +86,14 @@ func (p *Publisher) sendCandidate(id string, trackSource pb.TrackSource) webrtcx
 // The caller must check if result in channel is nil.
 // sendCandidate receive candidate from remote webRTC peer via MQTT.
 // The subscription topic is unique to this edge device.
-func (p *Publisher) recvCandidate(id string, trackSource pb.TrackSource) webrtcx.RecvCandidateFunc {
-	return func() <-chan *webrtc.ICECandidate {
+func (p *Publisher) recvCandidate(meta *pb.Meta) webrtcx.RecvCandidateFunc {
+	return func() <-chan string {
 		// TODO: Figure how to properly close channel.
-		ch := make(chan *webrtc.ICECandidate, 2) // Make buffer 2 because we have at least 2 sendings.
-		topic := p.config.CandidateRecvTopicSuffix + "/" + id + "/" + strconv.Itoa(int(trackSource))
+		ch := make(chan string, 2) // Make buffer 2 because we have at least 2 sendings.
+		topic := p.config.CandidateRecvTopicSuffix + "/" + meta.Id + "/" + strconv.Itoa(int(meta.TrackSource))
 		// Receive remote ICE candidate with MQTT.
 		t := p.client.Subscribe(topic, byte(p.config.Qos), func(c mqtt.Client, m mqtt.Message) {
-			candidate, err := decodeCandidate(m.Payload())
+			candidate, err := pb.DecodeCandidate(m.Payload())
 			if err != nil {
 				p.logger.Err(err).Msg("could not decode candidate")
 				return
@@ -124,8 +125,8 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 
 		logger := p.logger.With().
 			Str("offer_topic", p.config.OfferTopic).
-			Str("id", offer.Id).
-			Int32("track_source", int32(offer.TrackSource)).
+			Str("id", offer.Meta.Id).
+			Int32("track_source", int32(offer.Meta.TrackSource)).
 			Logger()
 		logger.Debug().Msg("received offer from edge")
 
@@ -136,14 +137,14 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 		}
 		logger.Debug().Msg("Successfully signaled peer connection")
 
-		payload, err := proto.Marshal(answer)
+		payload, err := pb.EncodeSDP(answer, nil)
 		if err != nil {
 			logger.Err(err).Msg("could not encode sdp")
 			return
 		}
 
 		// The publishing topic is unique to each edge device and is determined by above receiving message payload.
-		answerTopic := p.config.AnswerTopicSuffix + "/" + offer.Id + "/" + strconv.Itoa(int(offer.TrackSource))
+		answerTopic := p.config.AnswerTopicSuffix + "/" + offer.Meta.Id + "/" + strconv.Itoa(int(offer.Meta.TrackSource))
 		t := c.Publish(answerTopic, byte(p.config.Qos), p.config.Retained, payload)
 		<-t.Done()
 		if t.Error() != nil {
@@ -153,16 +154,21 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 		logger.Debug().Str("answer_topic", answerTopic).Msg("sent answer to edge")
 
 		// Register session on signaling success.
-		p.registerSession(offer.Id, offer.TrackSource, videoTrack)
+		p.registerSession(offer.Meta, videoTrack)
 	}
 }
 
 // signalPeerConnection creates video track and performs webRTC signaling.
 func (p *Publisher) signalPeerConnection(offer *pb.SessionDescription, logger *zerolog.Logger) (
-	*pb.SessionDescription,
+	*webrtc.SessionDescription,
 	*webrtc.TrackLocalStaticRTP,
 	error,
 ) {
+	var sdp webrtc.SessionDescription
+	if err := json.Unmarshal([]byte(offer.Sdp), &sdp); err != nil {
+		return nil, nil, err
+	}
+
 	videoTrack, err := webrtcx.CreateLocalTrack()
 	if err != nil {
 		return nil, nil, fmt.Errorf("could not create webRTC local video track: %w", err)
@@ -172,61 +178,25 @@ func (p *Publisher) signalPeerConnection(offer *pb.SessionDescription, logger *z
 	w := webrtcx.New(
 		p.config.WebRTCConfigOptions,
 		logger,
-		p.sendCandidate(offer.Id, offer.TrackSource),
-		p.recvCandidate(offer.Id, offer.TrackSource),
+		p.sendCandidate(offer.Meta),
+		p.recvCandidate(offer.Meta),
 	)
 
 	// TODO: handle blocking case with timeout for channels.
-	w.OfferChan <- offer
+	w.SignalChan <- &sdp
 	if err := w.CreatePublisher(videoTrack); err != nil {
 		return nil, nil, fmt.Errorf("failed to create webRTC publisher: %w", err)
 	}
 	logger.Debug().Msg("created publisher")
 
-	return <-w.AnswerChan, videoTrack, nil
+	return <-w.SignalChan, videoTrack, nil
 }
 
 func (p *Publisher) registerSession(
-	id string,
-	trackSource pb.TrackSource,
+	meta *pb.Meta,
 	videoTrack *webrtc.TrackLocalStaticRTP,
 ) {
-	sessionID := id + strconv.Itoa(int(trackSource))
+	sessionID := meta.Id + strconv.Itoa(int(meta.TrackSource))
 	p.sessions.Store(sessionID, videoTrack)
-	p.logger.Debug().Str("key", sessionID).Int32("value", int32(trackSource)).Msg("registered session")
-}
-
-func encodeCandidate(candidate *webrtc.ICECandidate) ([]byte, error) {
-	msg := pb.ICECandidate{
-		Foundation:     candidate.Foundation,
-		Priority:       candidate.Priority,
-		Address:        candidate.Address,
-		Protocol:       int32(candidate.Protocol),
-		Port:           uint32(candidate.Port),
-		Type:           int32(candidate.Typ),
-		Component:      uint32(candidate.Typ),
-		RelatedAddress: candidate.RelatedAddress,
-		RelatedPort:    uint32(candidate.RelatedPort),
-		TcpType:        candidate.TCPType,
-	}
-	return proto.Marshal(&msg)
-}
-
-func decodeCandidate(payload []byte) (*webrtc.ICECandidate, error) {
-	var candidate pb.ICECandidate
-	if err := proto.Unmarshal(payload, &candidate); err != nil {
-		return nil, err
-	}
-	return &webrtc.ICECandidate{
-		Foundation:     candidate.Foundation,
-		Priority:       candidate.Priority,
-		Address:        candidate.Address,
-		Protocol:       webrtc.ICEProtocol(candidate.Protocol),
-		Port:           uint16(candidate.Port),
-		Typ:            webrtc.ICECandidateType(candidate.Type),
-		Component:      uint16(candidate.Component),
-		RelatedAddress: candidate.RelatedAddress,
-		RelatedPort:    uint16(candidate.RelatedPort),
-		TCPType:        candidate.TcpType,
-	}, nil
+	p.logger.Debug().Str("key", sessionID).Int32("value", int32(meta.TrackSource)).Msg("registered session")
 }
