@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pion/webrtc/v3"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
 
@@ -101,8 +100,12 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 	for {
 		var msg incomingMessage
 		if err := wsjson.Read(ctx, c, &msg); err != nil {
-			s.logger.Err(err).Msg("could not read message")
-			_ = replyErr(ctx, c, msg.ID, nil, httpx.ErrReadMessage)
+			if websocket.CloseStatus(err) == websocket.StatusGoingAway {
+				s.logger.Debug().Msg("client closed connection")
+			} else {
+				s.logger.Err(err).Msg("could not read message")
+				_ = replyErr(ctx, c, msg.ID, nil, httpx.ErrReadMessage)
+			}
 			return
 		}
 
@@ -199,12 +202,6 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 			}
 		default:
 			s.logger.Warn().Str("event", msg.Event).Msg("unknown event")
-		}
-
-		select {
-		case <-ctx.Done():
-			log.Debug().Msgf("context is done: %v", ctx.Err())
-			return
 		}
 	}
 }
