@@ -1,7 +1,9 @@
 package livestream
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"sync"
 
 	pb "github.com/SB-IM/pb/signal"
@@ -171,7 +173,11 @@ func (p *publisher) processRTCP(rtpSender *webrtc.RTPSender) {
 	rtcpBuf := make([]byte, 1500)
 	for {
 		if _, _, rtcpErr := rtpSender.Read(rtcpBuf); rtcpErr != nil {
-			p.logger.Err(rtcpErr)
+			if errors.Is(rtcpErr, io.EOF) || errors.Is(rtcpErr, io.ErrClosedPipe) {
+				_ = rtpSender.Stop()
+			} else {
+				p.logger.Err(rtcpErr).Send()
+			}
 			return
 		}
 	}
