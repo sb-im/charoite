@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pion/webrtc/v3"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
 
@@ -118,7 +119,7 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 				_ = replyErr(ctx, c, msg.ID, nil, httpx.ErrIncorrectMetadata)
 				return
 			}
-			logger := s.logger.With().Str("id", offer.Meta.Id).Int32("track_source", int32(offer.Meta.TrackSource)).Logger()
+			logger := s.logger.With().Str("event_id", msg.ID).Str("id", offer.Meta.Id).Int32("track_source", int32(offer.Meta.TrackSource)).Logger()
 			logger.Debug().Msg("received offer from subscriber")
 
 			sessionID := offer.Meta.Id + strconv.Itoa(int(offer.Meta.TrackSource))
@@ -198,6 +199,12 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 			}
 		default:
 			s.logger.Warn().Str("event", msg.Event).Msg("unknown event")
+		}
+
+		select {
+		case <-ctx.Done():
+			log.Debug().Msgf("context is done: %v", ctx.Err())
+			return
 		}
 	}
 }
