@@ -16,6 +16,8 @@
 <script type="text/javascript">
     const conn = new WebSocket(`ws://${location.host}/v1/broadcast/signal`)
 
+    let answered = false
+    let candidates = []
     let pc = new RTCPeerConnection()
     pc.ontrack = function (event) {
         var el = document.createElement(event.track.kind)
@@ -78,6 +80,21 @@
         console.log("sent offer")
     })
 
+    function addCandidate(str) {
+        let candidate
+        try {
+            candidate = JSON.parse(str)
+        } catch (e) {
+            return console.log('failed to parse candidate')
+        }
+        if (!candidate) {
+            return console.log('empty candidate')
+        }
+        pc.addIceCandidate(candidate)
+            .then(() => console.log("added a candidate"))
+            .catch(e => console.error(e))
+    }
+
     conn.addEventListener("message", ev => {
         console.log(`received message: ${ev.data}`)
 
@@ -87,22 +104,27 @@
         }
         switch (msg.event) {
             case "video-answer":
-                let answer = JSON.parse(msg.data.sdp)
-                if (!answer) {
+                let answer
+                try {
+                    answer = JSON.parse(msg.data.sdp)
+                } catch (e) {
                     return console.log('failed to parse answer')
                 }
-                pc.setRemoteDescription(answer).catch(console)
-
-                console.log("set remote description")
+                pc.setRemoteDescription(answer)
+                    .then(() => {
+                        answered = true
+                        console.log("set remote description")
+                        candidates.forEach(c => addCandidate(c))
+                        candidates = []
+                    })
+                    .catch(e => console.error(e))
                 break;
             case "new-ice-candidate":
-                let candidate = JSON.parse(msg.data.candidate)
-                if (!candidate) {
-                    return console.log('failed to parse candidate')
+                if (!answered) {
+                    candidates.push(msg.data.candidate)
+                    return
                 }
-                pc.addIceCandidate(candidate).catch(console)
-
-                console.log("added a candidate")
+                addCandidate(msg.data.candidate)
                 break;
             default:
                 break;
