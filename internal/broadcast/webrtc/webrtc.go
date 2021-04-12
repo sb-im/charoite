@@ -231,7 +231,11 @@ func (w *WebRTC) processRTCP(rtpSender *webrtc.RTPSender) {
 	rtcpBuf := make([]byte, 1500)
 	for {
 		if _, _, rtcpErr := rtpSender.Read(rtcpBuf); rtcpErr != nil {
-			w.logger.Err(rtcpErr).Send()
+			if errors.Is(rtcpErr, io.EOF) || errors.Is(rtcpErr, io.ErrClosedPipe) {
+				_ = rtpSender.Stop()
+			} else {
+				w.logger.Err(rtcpErr).Send()
+			}
 			return
 		}
 	}
