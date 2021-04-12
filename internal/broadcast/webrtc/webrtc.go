@@ -29,7 +29,7 @@ type WebRTC struct {
 	logger zerolog.Logger
 	config cfg.WebRTCConfigOptions
 
-	// SignalChan is a biderection channel.
+	// SignalChan is a bi-direction channel.
 	SignalChan chan *webrtc.SessionDescription
 
 	pendingCandidates []*webrtc.ICECandidate
@@ -134,7 +134,7 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 		if err := w.sendCandidate(c); err != nil {
 			w.logger.Err(err).Msg("could not send candidate")
 		}
-		w.logger.Debug().Msg("sent an ICEcandidate")
+		w.logger.Debug().Msg("sent an ICE candidate")
 	})
 
 	// Set the handler for ICE connection state
@@ -238,7 +238,7 @@ func (w *WebRTC) processRTCP(rtpSender *webrtc.RTPSender) {
 }
 
 // NoopSendCandidateFunc does nothing.
-func NoopSendCandidateFunc(candidate *webrtc.ICECandidate) error {
+func NoopSendCandidateFunc(_ *webrtc.ICECandidate) error {
 	return nil
 }
 

@@ -15,6 +15,7 @@ import (
 	"nhooyr.io/websocket/wsjson"
 
 	"github.com/SB-IM/skywalker/internal/broadcast/cfg"
+	"github.com/SB-IM/skywalker/internal/broadcast/httpx"
 	webrtcx "github.com/SB-IM/skywalker/internal/broadcast/webrtc"
 )
 
@@ -31,12 +32,14 @@ type Subscriber struct {
 // incomingMessage is a generic WebSocket incoming message.
 type incomingMessage struct {
 	Event string          `json:"event"`
+	ID    string          `json:"id"`
 	Data  json.RawMessage `json:"data"`
 }
 
 // outgoingMessage is a generic WebSocket outgoing message.
 type outgoingMessage struct {
 	Event string      `json:"event"`
+	ID    string      `json:"id"`
 	Data  interface{} `json:"data"`
 }
 
@@ -64,10 +67,12 @@ func (s *Subscriber) Signal() http.Handler {
 }
 
 // handleSignal handles subscriber with webSocket api.
-// Has candidate trickle suppoort.
+// Has candidate trickle support.
 func (s *Subscriber) handleSignal() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		c, err := websocket.Accept(w, r, nil)
+		c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+			OriginPatterns: []string{"InsecureSkipVerify"},
+		})
 		if err != nil {
 			s.logger.Err(err).Msg("could not upgrade to webSocket connection")
 			return
@@ -93,19 +98,10 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 	}()
 
 	for {
-		msgType, raw, err := c.Read(ctx)
-		if err != nil {
-			s.logger.Err(err).Msg("could not read message")
-			return
-		}
-		if msgType != websocket.MessageText {
-			s.logger.Warn().Msg("message type is not text")
-			return
-		}
-
 		var msg incomingMessage
-		if err := json.Unmarshal(raw, &msg); err != nil {
-			s.logger.Err(err).Msg("could not unmarshal JSON data")
+		if err := wsjson.Read(ctx, c, &msg); err != nil {
+			s.logger.Err(err).Msg("could not read message")
+			_ = replyErr(ctx, c, msg.ID, nil, httpx.ErrReadMessage)
 			return
 		}
 
@@ -114,10 +110,12 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 			var offer pb.SessionDescription
 			if err := json.Unmarshal(msg.Data, &offer); err != nil {
 				s.logger.Err(err).Msg("could not unmarshal JSON data")
+				_ = replyErr(ctx, c, msg.ID, nil, httpx.ErrUnmarshalJSON)
 				return
 			}
 			if offer.Meta == nil || offer.Meta.Id == "" {
 				s.logger.Error().Msg("incorrect metadata")
+				_ = replyErr(ctx, c, msg.ID, nil, httpx.ErrIncorrectMetadata)
 				return
 			}
 			logger := s.logger.With().Str("id", offer.Meta.Id).Int32("track_source", int32(offer.Meta.TrackSource)).Logger()
@@ -127,20 +125,23 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 			value, ok := s.sessions.Load(sessionID)
 			if !ok {
 				logger.Error().Msg("no machine id or track source found in existing sessions")
+				_ = replyErr(ctx, c, msg.ID, offer.Meta, httpx.ErrMetadataNotMatched)
 				return
 			}
 
 			wcx := webrtcx.New(s.config, &logger, sendCandidate(ctx, c, offer.Meta), recvCandidate(candidateChan[offer.Meta.TrackSource]))
 
 			var sdp webrtc.SessionDescription
-			if err = json.Unmarshal([]byte(offer.Sdp), &sdp); err != nil {
+			if err := json.Unmarshal([]byte(offer.Sdp), &sdp); err != nil {
 				s.logger.Err(err).Msg("could not unmarshal sdp")
+				_ = replyErr(ctx, c, msg.ID, offer.Meta, httpx.ErrUnmarshalJSON)
 				return
 			}
 			// TODO: handle blocking case with timeout for channels.
 			wcx.SignalChan <- &sdp
-			if err = wcx.CreateSubscriber(value.(*webrtc.TrackLocalStaticRTP)); err != nil {
+			if err := wcx.CreateSubscriber(value.(*webrtc.TrackLocalStaticRTP)); err != nil {
 				logger.Err(err).Msg("failed to create subscriber")
+				_ = replyErr(ctx, c, msg.ID, offer.Meta, httpx.ErrFailedToCreateSubscriber)
 				return
 			}
 			logger.Debug().Msg("successfully created subscriber")
@@ -150,6 +151,7 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 			b, err := json.Marshal(answer)
 			if err != nil {
 				s.logger.Err(err).Msg("could not unmarshal answer to JSON")
+				_ = replyErr(ctx, c, msg.ID, offer.Meta, httpx.ErrUnmarshalJSON)
 				return
 			}
 			if err := wsjson.Write(ctx, c, &outgoingMessage{
@@ -167,22 +169,26 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 			var candidate pb.ICECandidate
 			if err := json.Unmarshal(msg.Data, &candidate); err != nil {
 				s.logger.Err(err).Msg("could not unmarshal JSON data")
+				_ = replyErr(ctx, c, msg.ID, nil, httpx.ErrUnmarshalJSON)
 				return
 			}
 			if candidate.Meta == nil || candidate.Meta.Id == "" {
 				s.logger.Error().Msg("incorrect metadata")
+				_ = replyErr(ctx, c, msg.ID, nil, httpx.ErrIncorrectMetadata)
 				return
 			}
 			sessionID := candidate.Meta.Id + strconv.Itoa(int(candidate.Meta.TrackSource))
 			_, ok := s.sessions.Load(sessionID)
 			if !ok {
 				s.logger.Error().Msg("no machine id or track source found in existing sessions")
+				_ = replyErr(ctx, c, msg.ID, candidate.Meta, httpx.ErrMetadataNotMatched)
 				return
 			}
 
 			var candidateInit webrtc.ICECandidateInit
 			if err := json.Unmarshal([]byte(candidate.Candidate), &candidateInit); err != nil {
 				s.logger.Err(err).Msg("could not unmarshal JSON candidate")
+				_ = replyErr(ctx, c, msg.ID, candidate.Meta, httpx.ErrUnmarshalJSON)
 				return
 			}
 			if candidate.Meta.TrackSource == pb.TrackSource_DRONE {
@@ -221,4 +227,22 @@ func recvCandidate(candidateChan <-chan string) webrtcx.RecvCandidateFunc {
 	return func() <-chan string {
 		return candidateChan
 	}
+}
+
+// replyErr is an uniform error event reply to WebSocket client.
+func replyErr(ctx context.Context, c *websocket.Conn, id string, meta *pb.Meta, code httpx.Code) error {
+	type data struct {
+		Meta *pb.Meta   `json:"meta,omitempty"`
+		Code httpx.Code `json:"code"`
+		Msg  string     `json:"message"`
+	}
+	return wsjson.Write(ctx, c, outgoingMessage{
+		Event: "error",
+		ID:    id,
+		Data: data{
+			Meta: meta,
+			Code: code,
+			Msg:  httpx.Errors[code],
+		},
+	})
 }
