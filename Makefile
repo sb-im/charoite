@@ -22,6 +22,10 @@ image:
 	-t $(IMAGE_LIVESTREAM) \
 	-f docker/Dockerfile.livestream.dev .
 
+.PHONY: push
+push:
+	@docker push ${IMAGE_LIVESTREAM}
+
 # Note: '--env-file' value is relative to '-f' value's directory.
 .PHONY: up
 up: down image
