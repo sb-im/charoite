@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   livestream:
-    image: ghcr.io/sb-im/sphinx:livestream-amd64-latest
+    image: ghcr.io/sb-im/sphinx:amd64-latest
     container_name: livestream
     command:
       - --debug
@@ -25,7 +25,7 @@ services:
         loki-batch-size: "400"
 
   broadcast:
-    image: ghcr.io/sb-im/skywalker:broadcast-latest
+    image: ghcr.io/sb-im/skywalker:latest
     container_name: broadcast
     command:
       - --debug
