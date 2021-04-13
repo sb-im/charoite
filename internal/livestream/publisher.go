@@ -8,6 +8,7 @@ import (
 
 	pb "github.com/SB-IM/pb/signal"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/google/uuid"
 	"github.com/pion/webrtc/v3"
 	"github.com/rs/zerolog"
 )
@@ -186,10 +187,11 @@ func (p *publisher) processRTCP(rtpSender *webrtc.RTPSender) {
 // videoTrackRTP creates a RTP video track.
 // The default MIME type is H.264
 func videoTrackRTP() (webrtc.TrackLocal, error) {
+	id := uuid.New().String()
 	videoTrack, err := webrtc.NewTrackLocalStaticRTP(
 		webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264},
-		"video_drone",
-		"edge_drone",
+		"video-"+id,
+		"edge-"+id,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("could not create TrackLocalStaticRTP: %w", err)
@@ -200,10 +202,11 @@ func videoTrackRTP() (webrtc.TrackLocal, error) {
 // videoTrackSample creates a sample video track.
 // The default MIME type is H.264
 func videoTrackSample() (webrtc.TrackLocal, error) {
+	id := uuid.New().String()
 	videoTrack, err := webrtc.NewTrackLocalStaticSample(
 		webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264},
-		"video_webcam",
-		"edge_webcam",
+		"video-"+id,
+		"edge-"+id,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("could not create TrackLocalStaticSample: %w", err)
