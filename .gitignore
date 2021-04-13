@@ -3,3 +3,4 @@ config/config.dev.yaml
 config/config.docker.yaml
 .env
 log
+sphinx
