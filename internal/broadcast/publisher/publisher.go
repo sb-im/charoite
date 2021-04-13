@@ -180,6 +180,7 @@ func (p *Publisher) signalPeerConnection(offer *pb.SessionDescription, logger *z
 		logger,
 		p.sendCandidate(offer.Meta),
 		p.recvCandidate(offer.Meta),
+		p.deregisterSession(offer.Meta),
 	)
 
 	// TODO: handle blocking case with timeout for channels.
@@ -199,4 +200,12 @@ func (p *Publisher) registerSession(
 	sessionID := meta.Id + strconv.Itoa(int(meta.TrackSource))
 	p.sessions.Store(sessionID, videoTrack)
 	p.logger.Debug().Str("key", sessionID).Int32("value", int32(meta.TrackSource)).Msg("registered session")
+}
+
+func (p *Publisher) deregisterSession(meta *pb.Meta) webrtcx.DeregisterSessionFunc {
+	return func() {
+		sessionID := meta.Id + strconv.Itoa(int(meta.TrackSource))
+		p.sessions.Delete(sessionID)
+		p.logger.Debug().Str("key", sessionID).Int32("value", int32(meta.TrackSource)).Msg("deregistered session")
+	}
 }

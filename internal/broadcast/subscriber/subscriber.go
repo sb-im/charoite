@@ -133,7 +133,13 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 				return
 			}
 
-			wcx := webrtcx.New(s.config, &logger, sendCandidate(ctx, c, offer.Meta), recvCandidate(candidateChan[offer.Meta.TrackSource]))
+			wcx := webrtcx.New(
+				s.config,
+				&logger,
+				sendCandidate(ctx, c, offer.Meta),
+				recvCandidate(candidateChan[offer.Meta.TrackSource]),
+				webrtcx.NoopDeregisterSessionFunc,
+			)
 
 			var sdp webrtc.SessionDescription
 			if err := json.Unmarshal([]byte(offer.Sdp), &sdp); err != nil {
