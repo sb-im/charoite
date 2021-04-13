@@ -22,6 +22,10 @@ image:
 	-t $(IMAGE_BROADCAST) \
 	-f docker/Dockerfile.broadcast.dev .
 
+.PHONY: push
+push:
+	@docker push ${IMAGE_BROADCAST}
+
 # Note: '--env-file' value is relative to '-f' value's directory.
 .PHONY: up
 up: down image
