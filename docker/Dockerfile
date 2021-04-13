@@ -1,7 +1,13 @@
-FROM golang:1.16-buster
+FROM golang:1.16-alpine
 
 # See: https://docs.github.com/en/packages/guides/connecting-a-repository-to-a-container-image#connecting-a-repository-to-a-container-image-on-the-command-line
 LABEL org.opencontainers.image.source=https://github.com/SB-IM/skywalker
+
+RUN apk update && apk add --no-cache \
+    git \
+    openssh-client \
+    ca-certificates \
+    && update-ca-certificates
 
 WORKDIR /src
 
@@ -17,12 +23,21 @@ RUN --mount=type=ssh,id=github git config --global url."git@github.com:".instead
 
 COPY . .
 
-RUN GOOS=linux go build -race -tags timetzdata -o broadcast ./cmd
+RUN CGO_ENABLED=0 GOOS=linux go build -tags timetzdata -ldflags="-w -s" -a -installsuffix cgo -o skywalker ./cmd
+
+FROM scratch
+
+COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=0 /src/skywalker /
 
 ENV DEBUG_MQTT_CLIENT=false
 
 VOLUME [ "/config" ]
 
-ENTRYPOINT [ "/src/broadcast" ]
+VOLUME [ "/src/e2e" ]
+
+EXPOSE 8080
+
+ENTRYPOINT [ "/skywalker" ]
 
 CMD [ "--debug", "broadcast", "-c", "/config/config.yaml" ]
