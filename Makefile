@@ -1,3 +1,6 @@
+# Project name.
+PROJECT_NAME:=skywalker
+
 # SSH private key set up.
 CURRENT_USER?=william
 PRIVATE_KEY_FILE?=id_ed25519
@@ -5,11 +8,15 @@ PRIVATE_KEY_PATH?=github=/home/$(CURRENT_USER)/.ssh/$(PRIVATE_KEY_FILE)
 PROJECT_DIR?=/home/${CURRENT_USER}/go/src/github.com/SB-IM/skywalker
 
 # Project image repo.
-IMAGE_BROADCAST?=ghcr.io/sb-im/skywalker:broadcast-latest
+IMAGE?=ghcr.io/sb-im/skywalker:latest
 
 .PHONY: run
 run:
 	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug broadcast -c config/config.dev.yaml
+
+.PHONY: build
+build:
+	@go build -race -o ${PROJECT_NAME} ./cmd
 
 .PHONY: lint
 lint:
@@ -19,12 +26,12 @@ lint:
 image:
 	@docker build \
 	--ssh $(PRIVATE_KEY_PATH) \
-	-t $(IMAGE_BROADCAST) \
-	-f docker/Dockerfile.broadcast.dev .
+	-t $(IMAGE) \
+	-f docker/Dockerfile.dev .
 
 .PHONY: push
 push:
-	@docker push ${IMAGE_BROADCAST}
+	@docker push ${IMAGE}
 
 # Note: '--env-file' value is relative to '-f' value's directory.
 .PHONY: up
