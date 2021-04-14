@@ -1,4 +1,4 @@
-name: Build livestream image
+name: Build container image
 on:
   workflow_dispatch:
   push:
@@ -8,7 +8,7 @@ on:
       - "v*"
 jobs:
   build:
-    name: Build livestream image
+    name: Build container image
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
@@ -19,15 +19,13 @@ jobs:
         with:
           images: ghcr.io/sb-im/sphinx
           tags: |
-            type=edge,prefix=livestream-
-            type=ref,prefix=livestream-,event=branch
-            type=ref,prefix=livestream-,event=pr
-            type=semver,prefix=livestream-,pattern={{version}}
-            type=semver,prefix=livestream-,pattern={{major}}.{{minor}}
-            type=sha,prefix=livestream-
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
           flavor: |
             latest=true
-            prefix=livestream-
             suffix=-arm64
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -53,7 +51,7 @@ jobs:
         with:
           ssh: github=ssh-key
           platforms: linux/arm64
-          file: docker/Dockerfile.livestream
+          file: docker/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
