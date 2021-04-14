@@ -8,7 +8,7 @@ PRIVATE_KEY_PATH?=github=/home/$(CURRENT_USER)/.ssh/$(PRIVATE_KEY_FILE)
 PROJECT_DIR?=/home/${CURRENT_USER}/go/src/github.com/SB-IM/sphinx
 
 # Project image repo.
-IMAGE?=ghcr.io/sb-im/sphinx:amd64-latest
+IMAGE?=ghcr.io/sb-im/sphinx:latest-amd64
 
 .PHONY: run
 run:

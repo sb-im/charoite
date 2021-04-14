@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   livestream:
-    image: ghcr.io/sb-im/sphinx:amd64-latest
+    image: ghcr.io/sb-im/sphinx:latest-amd64
     container_name: livestream
     command:
       - --debug
@@ -11,8 +11,8 @@ services:
     environment:
       - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
     volumes:
-      - ../config/config.docker.yaml:/config/config.yaml
-      - /etc/machine-id:/etc/machine-id
+      - ../config/config.docker.yaml:/config/config.yaml:ro
+      - /etc/machine-id:/etc/machine-id:ro
     depends_on:
       - mosquitto
     restart: on-failure
@@ -21,5 +21,5 @@ services:
     image: eclipse-mosquitto:2
     container_name: mosquitto
     volumes:
-      - ../config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ../config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
     restart: on-failure
