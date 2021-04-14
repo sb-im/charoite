@@ -5,10 +5,10 @@ PROJECT_NAME:=skywalker
 CURRENT_USER?=william
 PRIVATE_KEY_FILE?=id_ed25519
 PRIVATE_KEY_PATH?=github=/home/$(CURRENT_USER)/.ssh/$(PRIVATE_KEY_FILE)
-PROJECT_DIR?=/home/${CURRENT_USER}/go/src/github.com/SB-IM/skywalker
+PROJECT_DIR?=/home/$(CURRENT_USER)/go/src/github.com/SB-IM/skywalker
 
 # Project image repo.
-IMAGE?=ghcr.io/sb-im/skywalker:latest
+IMAGE?=ghcr.io/sb-im/skywalker:latest-dev
 
 .PHONY: run
 run:
@@ -16,7 +16,7 @@ run:
 
 .PHONY: build
 build:
-	@go build -race -o ${PROJECT_NAME} ./cmd
+	@go build -race -o $(PROJECT_NAME) ./cmd
 
 .PHONY: lint
 lint:
@@ -31,7 +31,7 @@ image:
 
 .PHONY: push
 push:
-	@docker push ${IMAGE}
+	@docker push $(IMAGE)
 
 # Note: '--env-file' value is relative to '-f' value's directory.
 .PHONY: up
@@ -44,7 +44,7 @@ down:
 
 .PHONY: broker
 broker:
-	@docker run -d --rm --name mosquitto -p 1883:1883 -p 9001:9001 -v ${PROJECT_DIR}/config/mosquitto.conf:/mosquitto/config/mosquitto.conf eclipse-mosquitto:2
+	@docker run -d --rm --name mosquitto -p 1883:1883 -p 9001:9001 -v $(PROJECT_DIR)/config/mosquitto.conf:/mosquitto/config/mosquitto.conf eclipse-mosquitto:2
 
 .PHONY: stop-broker
 stop-broker:
