@@ -1,4 +1,4 @@
-name: Build broadcast image
+name: Build container image
 on:
   workflow_dispatch:
   push:
@@ -8,7 +8,7 @@ on:
       - "v*"
 jobs:
   build:
-    name: Build broadcast image
+    name: Build container image
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
@@ -19,15 +19,13 @@ jobs:
         with:
           images: ghcr.io/sb-im/skywalker
           tags: |
-            type=edge,prefix=broadcast-
-            type=ref,prefix=broadcast-,event=branch
-            type=ref,prefix=broadcast-,event=pr
-            type=semver,prefix=broadcast-,pattern={{version}}
-            type=semver,prefix=broadcast-,pattern={{major}}.{{minor}}
-            type=sha,prefix=broadcast-
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
           flavor: |
             latest=true
-            prefix=broadcast-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
@@ -51,7 +49,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           ssh: github=ssh-key
-          file: docker/Dockerfile.broadcast
+          file: docker/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
