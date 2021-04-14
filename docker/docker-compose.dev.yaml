@@ -17,7 +17,7 @@ services:
       - mosquitto
       - broadcast
     restart: on-failure
-    logging:
+    logging: &loki
       driver: loki
       options:
         loki-url: "http://localhost:3100/api/prom/push"
@@ -42,12 +42,7 @@ services:
     depends_on:
       - mosquitto
     restart: on-failure
-    logging:
-      driver: loki
-      options:
-        loki-url: "http://localhost:3100/api/prom/push"
-        loki-retries: "5"
-        loki-batch-size: "400"
+    logging: *loki
 
   mosquitto:
     image: eclipse-mosquitto:2
@@ -55,32 +50,17 @@ services:
     volumes:
       - ../config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
     restart: on-failure
-    logging:
-      driver: loki
-      options:
-        loki-url: "http://localhost:3100/api/prom/push"
-        loki-retries: "5"
-        loki-batch-size: "400"
+    logging: *loki
 
   loki:
     image: grafana/loki:latest
     ports:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
-    logging:
-      driver: loki
-      options:
-        loki-url: "http://localhost:3100/api/prom/push"
-        loki-retries: "5"
-        loki-batch-size: "400"
+    logging: *loki
 
   grafana:
     image: grafana/grafana:latest
     ports:
       - "3000:3000"
-    logging:
-      driver: loki
-      options:
-        loki-url: "http://localhost:3100/api/prom/push"
-        loki-retries: "5"
-        loki-batch-size: "400"
+    logging: *loki
