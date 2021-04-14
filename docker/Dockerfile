@@ -34,8 +34,6 @@ ENV DEBUG_MQTT_CLIENT=false
 
 VOLUME [ "/config" ]
 
-VOLUME [ "/src/e2e" ]
-
 EXPOSE 8080
 
 ENTRYPOINT [ "/skywalker" ]
