@@ -36,7 +36,6 @@ services:
       - "8080:8080"
     environment:
       - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
-      - DEBUG=true
     volumes:
       - ../config/config.docker.yaml:/config/config.yaml:ro
     depends_on:
