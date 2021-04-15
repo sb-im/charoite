@@ -61,6 +61,9 @@ func (p *publisher) Meta() *pb.Meta {
 }
 
 func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
+	candidateChan := p.recvCandidate()
+	answerChan := p.recvAnswer()
+
 	peerConnection, err := webrtc.NewPeerConnection(webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
 			{
@@ -127,7 +130,7 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 	p.logger.Debug().Msg("sent local description offer")
 
 	// TODO: Timeout channel receiving to avoid blocking.
-	answer := <-p.recvAnswer()
+	answer := <-answerChan
 	if answer == nil {
 		return nil
 	}
@@ -137,7 +140,7 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 	p.logger.Debug().Msg("received remote answer from cloud")
 
 	// Signal candidate after setting remote description.
-	go p.signalCandidate(peerConnection)
+	go p.signalCandidate(peerConnection, candidateChan)
 
 	// Signal candidate
 	p.candidatesMux.Lock()
@@ -153,10 +156,9 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 	return nil
 }
 
-func (p *publisher) signalCandidate(peerConnection *webrtc.PeerConnection) {
+func (p *publisher) signalCandidate(peerConnection *webrtc.PeerConnection, ch <-chan string) {
 	// TODO: Stop adding ICE candidate when after signaling succeeded, that is, to exit the loop.
 	// Just set a timer is not enough.
-	ch := p.recvCandidate()
 	for c := range ch {
 		if err := peerConnection.AddICECandidate(webrtc.ICECandidateInit{
 			Candidate: c,
