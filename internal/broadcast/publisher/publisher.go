@@ -130,7 +130,7 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 			Logger()
 		logger.Debug().Msg("received offer from edge")
 
-		answer, videoTrack, err := p.signalPeerConnection(&offer, &logger)
+		answer, err := p.signalPeerConnection(&offer, &logger)
 		if err != nil {
 			logger.Err(err).Msg("failed to signal peer connection")
 			return
@@ -152,26 +152,22 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 			return
 		}
 		logger.Debug().Str("answer_topic", answerTopic).Msg("sent answer to edge")
-
-		// Register session on signaling success.
-		p.registerSession(offer.Meta, videoTrack)
 	}
 }
 
 // signalPeerConnection creates video track and performs webRTC signaling.
 func (p *Publisher) signalPeerConnection(offer *pb.SessionDescription, logger *zerolog.Logger) (
 	*webrtc.SessionDescription,
-	*webrtc.TrackLocalStaticRTP,
 	error,
 ) {
 	var sdp webrtc.SessionDescription
 	if err := json.Unmarshal([]byte(offer.Sdp), &sdp); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	videoTrack, err := webrtcx.CreateLocalTrack()
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not create webRTC local video track: %w", err)
+		return nil, fmt.Errorf("could not create webRTC local video track: %w", err)
 	}
 	logger.Debug().Msg("created video track")
 
@@ -180,32 +176,31 @@ func (p *Publisher) signalPeerConnection(offer *pb.SessionDescription, logger *z
 		logger,
 		p.sendCandidate(offer.Meta),
 		p.recvCandidate(offer.Meta),
-		p.deregisterSession(offer.Meta),
+		p.registerSession(offer.Meta, videoTrack),
 	)
 
 	// TODO: handle blocking case with timeout for channels.
 	w.SignalChan <- &sdp
 	if err := w.CreatePublisher(videoTrack); err != nil {
-		return nil, nil, fmt.Errorf("failed to create webRTC publisher: %w", err)
+		return nil, fmt.Errorf("failed to create webRTC publisher: %w", err)
 	}
 	logger.Debug().Msg("created publisher")
 
-	return <-w.SignalChan, videoTrack, nil
+	return <-w.SignalChan, nil
 }
 
 func (p *Publisher) registerSession(
 	meta *pb.Meta,
 	videoTrack *webrtc.TrackLocalStaticRTP,
-) {
-	sessionID := meta.Id + strconv.Itoa(int(meta.TrackSource))
-	p.sessions.Store(sessionID, videoTrack)
-	p.logger.Debug().Str("key", sessionID).Int32("value", int32(meta.TrackSource)).Msg("registered session")
-}
-
-func (p *Publisher) deregisterSession(meta *pb.Meta) webrtcx.DeregisterSessionFunc {
+) webrtcx.RegisterSessionFunc {
 	return func() {
 		sessionID := meta.Id + strconv.Itoa(int(meta.TrackSource))
-		p.sessions.Delete(sessionID)
-		p.logger.Debug().Str("key", sessionID).Int32("value", int32(meta.TrackSource)).Msg("deregistered session")
+		_, ok := p.sessions.Load(sessionID)
+		p.sessions.Store(sessionID, videoTrack)
+		if ok {
+			p.logger.Info().Str("key", sessionID).Int32("value", int32(meta.TrackSource)).Msg("re-registered old session")
+		} else {
+			p.logger.Info().Str("key", sessionID).Int32("value", int32(meta.TrackSource)).Msg("registered session")
+		}
 	}
 }

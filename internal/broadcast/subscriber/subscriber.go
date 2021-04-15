@@ -138,7 +138,7 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 				&logger,
 				sendCandidate(ctx, c, offer.Meta),
 				recvCandidate(candidateChan[offer.Meta.TrackSource]),
-				webrtcx.NoopDeregisterSessionFunc,
+				webrtcx.NoopRegisterSessionFunc,
 			)
 
 			var sdp webrtc.SessionDescription

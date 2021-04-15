@@ -21,9 +21,9 @@ type SendCandidateFunc func(candidate *webrtc.ICECandidate) error
 // SendCandidateFunc receives a candidate from remote webRTC peer.
 type RecvCandidateFunc func() <-chan string
 
-// DeregisterSessionFunc deregisters a edge WebRTC session. Only used for publisher.
-// For subscriber, it should use NoopDeregisterSessionFunc instead.
-type DeregisterSessionFunc func()
+// RegisterSessionFunc registers a edge WebRTC session. Only used for publisher.
+// For subscriber, it should use NoopRegisterSessionFunc instead.
+type RegisterSessionFunc func()
 
 const (
 	rtcpPLIInterval = time.Second * 3
@@ -39,9 +39,10 @@ type WebRTC struct {
 	pendingCandidates []*webrtc.ICECandidate
 	candidatesMux     sync.Mutex
 
-	sendCandidate     SendCandidateFunc
-	recvCandidate     RecvCandidateFunc
-	deregisterSession DeregisterSessionFunc
+	sendCandidate SendCandidateFunc
+	recvCandidate RecvCandidateFunc
+
+	registerSession RegisterSessionFunc
 }
 
 // New returns a new WebRTC.
@@ -50,15 +51,15 @@ func New(
 	logger *zerolog.Logger,
 	sendCandidate SendCandidateFunc,
 	recvCandidate RecvCandidateFunc,
-	deregisterSessionFunc DeregisterSessionFunc,
+	registerSession RegisterSessionFunc,
 ) *WebRTC {
 	return &WebRTC{
-		logger:            *logger,
-		config:            config,
-		SignalChan:        make(chan *webrtc.SessionDescription, 1), // Make 1 buffer so SDP signaling never blocks
-		sendCandidate:     sendCandidate,
-		recvCandidate:     recvCandidate,
-		deregisterSession: deregisterSessionFunc,
+		logger:          *logger,
+		config:          config,
+		SignalChan:      make(chan *webrtc.SessionDescription, 1), // Make 1 buffer so SDP signaling never blocks
+		sendCandidate:   sendCandidate,
+		recvCandidate:   recvCandidate,
+		registerSession: registerSession,
 	}
 }
 
@@ -156,14 +157,17 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 	// This will notify you when the peer has connected/disconnected
 	peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		w.logger.Debug().Str("state", connectionState.String()).Msg("ICE connection state has changed")
-		if connectionState == webrtc.ICEConnectionStateFailed {
+
+		switch connectionState {
+		case webrtc.ICEConnectionStateFailed:
 			if err := peerConnection.Close(); err != nil {
 				w.logger.Panic().Err(err).Msg("could not close peer connection")
 			}
 			w.logger.Debug().Msg("peer connection has been closed")
-
-			// Deregister session after peer connection closed.
-			w.deregisterSession()
+		case webrtc.ICEConnectionStateConnected:
+			// Register session after ICE state is connected.
+			w.registerSession()
+		default:
 		}
 	})
 
@@ -271,5 +275,5 @@ func NoopRecvCandidateFunc() <-chan string {
 	return ch
 }
 
-// NoopDeregisterSessionFunc does nothing.
-func NoopDeregisterSessionFunc() {}
+// NoopRegisterSessionFunc does nothing.
+func NoopRegisterSessionFunc() {}
