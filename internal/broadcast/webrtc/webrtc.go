@@ -132,6 +132,7 @@ func (w *WebRTC) CreateSubscriber(videoTrack *webrtc.TrackLocalStaticRTP) error 
 
 func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) error {
 	offer := <-w.SignalChan
+	candidateChan := w.recvCandidate()
 
 	peerConnection.OnICECandidate(func(c *webrtc.ICECandidate) {
 		if c == nil {
@@ -171,7 +172,7 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 	}
 
 	// Signal candidate after setting remote description.
-	go w.signalCandidate(peerConnection)
+	go w.signalCandidate(peerConnection, candidateChan)
 
 	answer, err := peerConnection.CreateAnswer(nil)
 	if err != nil {
@@ -212,10 +213,9 @@ func (w *WebRTC) newPeerConnection() (*webrtc.PeerConnection, error) {
 	})
 }
 
-func (w *WebRTC) signalCandidate(peerConnection *webrtc.PeerConnection) {
+func (w *WebRTC) signalCandidate(peerConnection *webrtc.PeerConnection, ch <-chan string) {
 	// TODO: Stop adding ICE candidate when after signaling succeeded, that is, to exit the loop.
 	// Just set a timer is not enough.
-	ch := w.recvCandidate()
 	for c := range ch {
 		if err := peerConnection.AddICECandidate(webrtc.ICECandidateInit{
 			Candidate: c,
