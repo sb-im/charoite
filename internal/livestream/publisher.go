@@ -61,8 +61,8 @@ func (p *publisher) Meta() *pb.Meta {
 }
 
 func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
-	candidateChan := p.recvCandidate()
 	answerChan := p.recvAnswer()
+	candidateChan := p.recvCandidate()
 
 	peerConnection, err := webrtc.NewPeerConnection(webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{
