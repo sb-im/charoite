@@ -7,6 +7,8 @@ github.com/SB-IM/mqtt-client v0.1.0 h1:3IAAD2G+ty4B8VrTckLOBLBx0Q405H/EOH83wvSXC
 github.com/SB-IM/mqtt-client v0.1.0/go.mod h1:cNLK452FV+CbQl/xslDvkiJwQcj2oq7PfbwRMdoJHcg=
 github.com/SB-IM/mqtt-client v0.1.1 h1:2GHv07Pfi90M1zGH8ZHu8/wfnntWC3mnKxCetrjqq9Y=
 github.com/SB-IM/mqtt-client v0.1.1/go.mod h1:cNLK452FV+CbQl/xslDvkiJwQcj2oq7PfbwRMdoJHcg=
+github.com/SB-IM/mqtt-client v0.1.2 h1:mdrcmuzmcLJXLl9gi3bmNzGJ+KHfp2zqWKhaqJeN//8=
+github.com/SB-IM/mqtt-client v0.1.2/go.mod h1:cNLK452FV+CbQl/xslDvkiJwQcj2oq7PfbwRMdoJHcg=
 github.com/SB-IM/pb v0.2.4 h1:V1FqyLVTC3AAlJzUj5JkXsZ34/MAHc74N42W0qO9Y+c=
 github.com/SB-IM/pb v0.2.4/go.mod h1:m33Pz96XbuiWx5h/59WRJ52FjzgOofCCIkVP5OFZri0=
 github.com/SB-IM/pb v0.2.5 h1:cqtTTTnxnhENJLpK3OI6KVNze1giDzSfVeRhTFtzSCg=
