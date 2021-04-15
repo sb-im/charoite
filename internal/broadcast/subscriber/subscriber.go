@@ -71,7 +71,7 @@ func (s *Subscriber) Signal() http.Handler {
 func (s *Subscriber) handleSignal() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-			OriginPatterns: []string{"InsecureSkipVerify"},
+			OriginPatterns: []string{"*"}, // TODO: Must remove this option on production environment.
 		})
 		if err != nil {
 			s.logger.Err(err).Msg("could not upgrade to webSocket connection")
