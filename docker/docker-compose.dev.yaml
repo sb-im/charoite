@@ -8,6 +8,8 @@ services:
       - livestream
       - -c
       - /config/config.yaml
+    ports:
+      - "5004:5004/udp"
     environment:
       - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
     volumes:
