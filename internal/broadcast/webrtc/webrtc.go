@@ -18,7 +18,7 @@ import (
 // SendCandidateFunc sends a candidate to remote webRTC peer.
 type SendCandidateFunc func(candidate *webrtc.ICECandidate) error
 
-// SendCandidateFunc receives a candidate from remote webRTC peer.
+// RecvCandidateFunc receives a candidate from remote webRTC peer.
 type RecvCandidateFunc func() <-chan string
 
 // RegisterSessionFunc registers a edge WebRTC session. Only used for publisher.
@@ -199,7 +199,7 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 		if err := w.sendCandidate(c); err != nil {
 			return fmt.Errorf("could not send candidate: %w", err)
 		}
-		w.logger.Debug().Msg("sent an ICEcandidate")
+		w.logger.Debug().Msg("sent an ICE candidate")
 	}
 
 	return nil
