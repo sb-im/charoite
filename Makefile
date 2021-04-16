@@ -8,7 +8,7 @@ PRIVATE_KEY_PATH?=github=/home/$(CURRENT_USER)/.ssh/$(PRIVATE_KEY_FILE)
 PROJECT_DIR?=/home/$(CURRENT_USER)/go/src/github.com/SB-IM/sphinx
 
 # Project image repo.
-IMAGE?=ghcr.io/sb-im/sphinx:latest-dev-amd64
+IMAGE?=ghcr.io/sb-im/sphinx:latest-dev
 
 .PHONY: run
 run:
@@ -26,7 +26,15 @@ lint:
 image:
 	@docker build \
 	--ssh $(PRIVATE_KEY_PATH) \
-	-t $(IMAGE) \
+	-t $(IMAGE)-amd64 \
+	-f docker/Dockerfile.dev .
+
+.PHONY: image-arm64
+image-arm64:
+	@docker buildx build \
+	--platform linux/arm64 \
+	--ssh $(PRIVATE_KEY_PATH) \
+	-t $(IMAGE)-arm64 \
 	-f docker/Dockerfile.dev .
 
 .PHONY: push
