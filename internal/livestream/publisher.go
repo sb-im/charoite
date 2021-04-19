@@ -165,7 +165,7 @@ func (p *publisher) signalCandidate(peerConnection *webrtc.PeerConnection, ch <-
 		}); err != nil {
 			p.logger.Err(err).Msg("could not add ICE candidate")
 		}
-		p.logger.Debug().Msg("successfully added an ICE candidate")
+		p.logger.Debug().Str("candidate", c).Msg("successfully added an ICE candidate")
 	}
 }
 
