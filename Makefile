@@ -35,11 +35,11 @@ image-arm64:
 	--platform linux/arm64 \
 	--ssh $(PRIVATE_KEY_PATH) \
 	-t $(IMAGE)-arm64 \
-	-f docker/Dockerfile.dev .
+	-f docker/Dockerfile .
 
 .PHONY: push
 push:
-	@docker push $(IMAGE)
+	@docker push $(IMAGE)-arm64
 
 # Note: '--env-file' value is relative to '-f' value's directory.
 .PHONY: up
