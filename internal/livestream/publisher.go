@@ -6,6 +6,7 @@ import (
 	"io"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	pb "github.com/SB-IM/pb/signal"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -15,7 +16,11 @@ import (
 )
 
 const (
-	maxRetry = 20
+	// maxBurstRetry is the maximum burst retry numbers.
+	maxBurstRetry = 10
+
+	// burstRetryInternval is the interval between burst retries.
+	burstRetryInternval = 1 * time.Minute
 )
 
 // publisher implements Livestream interface.
@@ -37,8 +42,8 @@ type publisher struct {
 
 	logger zerolog.Logger
 
-	// retryNo is one time counter, will be reset to zero on next retry.
-	retryNo uint32
+	// burstRetryNo is an one time counter, will be reset to zero after peer connection success or before next burst retry.
+	burstRetryNo uint32
 }
 
 func (p *publisher) Publish() error {
@@ -114,27 +119,28 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 	// This will notify you when the peer has connected/disconnected
 	peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		p.logger.Debug().Str("state", connectionState.String()).Msg("connection state has changed")
-
 		if connectionState == webrtc.ICEConnectionStateFailed {
 			if err = peerConnection.Close(); err != nil {
 				p.logger.Panic().Err(err).Msg("closing PeerConnection")
 			}
 			p.logger.Info().Msg("PeerConnection has been closed")
 
-			n := atomic.LoadUint32(&p.retryNo)
-			if n > maxRetry {
-				return
+			n := atomic.LoadUint32(&p.burstRetryNo)
+			if n > maxBurstRetry {
+				<-time.NewTimer(burstRetryInternval).C
+				// Reset counter after burst retries interval.
+				atomic.StoreUint32(&p.burstRetryNo, 0)
 			}
 			// currying call function.
 			p.logger.Info().Uint32("retry_no", n+1).Msg("retry creating peer connection")
 			if err := p.createPeerConnection(videoTrack); err != nil {
 				p.logger.Err(err).Msg("failed to create peer connection")
 			}
-			atomic.AddUint32(&p.retryNo, 1)
+			atomic.AddUint32(&p.burstRetryNo, 1)
 		}
 		if connectionState == webrtc.ICEConnectionStateConnected {
 			// If connection is successful, whether it's retried or not, counter should be reset to zero.
-			atomic.StoreUint32(&p.retryNo, 0)
+			atomic.StoreUint32(&p.burstRetryNo, 0)
 		}
 	})
 
