@@ -16,11 +16,11 @@ import (
 )
 
 const (
-	// maxBurstRetry is the maximum burst retry numbers.
-	maxBurstRetry = 10
+	// maxBurstRetries is the maximum burst retry numbers.
+	maxBurstRetries = 10
 
-	// burstRetryInternval is the interval between burst retries.
-	burstRetryInternval = 1 * time.Minute
+	// burstRetriesGroupInternval is the interval between burst retries group.
+	burstRetriesGroupInternval = 1 * time.Minute
 )
 
 // publisher implements Livestream interface.
@@ -42,8 +42,8 @@ type publisher struct {
 
 	logger zerolog.Logger
 
-	// burstRetryNo is an one time counter, will be reset to zero after peer connection success or before next burst retry.
-	burstRetryNo uint32
+	// burstRetriesNo is an one time counter, will be reset to zero after peer connection success or before next burst retry.
+	burstRetriesNo uint32
 }
 
 func (p *publisher) Publish() error {
@@ -125,22 +125,23 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 			}
 			p.logger.Info().Msg("PeerConnection has been closed")
 
-			n := atomic.LoadUint32(&p.burstRetryNo)
-			if n > maxBurstRetry {
-				<-time.NewTimer(burstRetryInternval).C
-				// Reset counter after burst retries interval.
-				atomic.StoreUint32(&p.burstRetryNo, 0)
+			n := atomic.LoadUint32(&p.burstRetriesNo)
+			if n > maxBurstRetries {
+				p.logger.Info().Dur("interval", burstRetriesGroupInternval).Msg("maximum burst retries reached, waiting for an interval time to continue next burst retries")
+				<-time.NewTimer(burstRetriesGroupInternval).C
+				// Reset counter after burst retries group interval.
+				atomic.StoreUint32(&p.burstRetriesNo, 0)
 			}
 			// currying call function.
 			p.logger.Info().Uint32("retry_no", n+1).Msg("retry creating peer connection")
-			if err := p.createPeerConnection(videoTrack); err != nil {
+			if err = p.createPeerConnection(videoTrack); err != nil {
 				p.logger.Err(err).Msg("failed to create peer connection")
 			}
-			atomic.AddUint32(&p.burstRetryNo, 1)
+			atomic.AddUint32(&p.burstRetriesNo, 1)
 		}
 		if connectionState == webrtc.ICEConnectionStateConnected {
 			// If connection is successful, whether it's retried or not, counter should be reset to zero.
-			atomic.StoreUint32(&p.burstRetryNo, 0)
+			atomic.StoreUint32(&p.burstRetriesNo, 0)
 		}
 	})
 
