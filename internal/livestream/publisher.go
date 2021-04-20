@@ -5,12 +5,17 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"sync/atomic"
 
 	pb "github.com/SB-IM/pb/signal"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
 	"github.com/pion/webrtc/v3"
 	"github.com/rs/zerolog"
+)
+
+const (
+	maxRetry = 20
 )
 
 // publisher implements Livestream interface.
@@ -31,6 +36,9 @@ type publisher struct {
 	candidatesMux     sync.Mutex
 
 	logger zerolog.Logger
+
+	// retryNo is one time counter, will be reset to zero on next retry.
+	retryNo uint32
 }
 
 func (p *publisher) Publish() error {
@@ -112,6 +120,21 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 				p.logger.Panic().Err(err).Msg("closing PeerConnection")
 			}
 			p.logger.Info().Msg("PeerConnection has been closed")
+
+			n := atomic.LoadUint32(&p.retryNo)
+			if n > maxRetry {
+				return
+			}
+			// currying call function.
+			p.logger.Info().Uint32("retry_no", n+1).Msg("retry creating peer connection")
+			if err := p.createPeerConnection(videoTrack); err != nil {
+				p.logger.Err(err).Msg("failed to create peer connection")
+			}
+			atomic.AddUint32(&p.retryNo, 1)
+		}
+		if connectionState == webrtc.ICEConnectionStateConnected {
+			// If connection is successful, whether it's retried or not, counter should be reset to zero.
+			atomic.StoreUint32(&p.retryNo, 0)
 		}
 	})
 
@@ -144,7 +167,10 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 
 	// Signal candidate
 	p.candidatesMux.Lock()
-	defer p.candidatesMux.Unlock()
+	defer func() {
+		p.emptyPendingCandidate()
+		p.candidatesMux.Unlock()
+	}()
 
 	for _, c := range p.pendingCandidates {
 		if err := p.sendCandidate(c); err != nil {
@@ -214,4 +240,9 @@ func videoTrackSample() (webrtc.TrackLocal, error) {
 		return nil, fmt.Errorf("could not create TrackLocalStaticSample: %w", err)
 	}
 	return videoTrack, nil
+}
+
+// emptyPendingCandidate is called after all ICE candidates were sent to release resources.
+func (p *publisher) emptyPendingCandidate() {
+	p.pendingCandidates = p.pendingCandidates[:0]
 }
