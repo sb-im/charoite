@@ -3,8 +3,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/SB-IM/logging v0.1.0/go.mod h1:VtWxAA+Qto3I28BcaS8eRgdxkOjT9ROwBqlSwL9n6Fw=
 github.com/SB-IM/logging v0.2.2 h1:YiG/bWJfc2L6Sx3/2U4MIWmjRiTOGKCUt2subs0cIuE=
 github.com/SB-IM/logging v0.2.2/go.mod h1:P3uXFI5pK3K/zvuOgBVwEjCB+NhW5DB0pv96JXez3lA=
-github.com/SB-IM/mqtt-client v0.1.2 h1:mdrcmuzmcLJXLl9gi3bmNzGJ+KHfp2zqWKhaqJeN//8=
-github.com/SB-IM/mqtt-client v0.1.2/go.mod h1:cNLK452FV+CbQl/xslDvkiJwQcj2oq7PfbwRMdoJHcg=
+github.com/SB-IM/mqtt-client v0.1.3 h1:b2qL+/5xlp8ZatqqjDbP/RqDPbYZ74N33jzs8NmrUCE=
+github.com/SB-IM/mqtt-client v0.1.3/go.mod h1:R6no5syEw8Vk2tLXgFY3Aizgfo4k+Dfa9N1ymE59uQQ=
 github.com/SB-IM/pb v0.3.1 h1:CgSdrOi8kiX15J7Wx+n/jcnyi2gu9fx7ySWt8QrQ1G4=
 github.com/SB-IM/pb v0.3.1/go.mod h1:/XrV0hXCaaOQSDhP6msTH8MwvhdC1RKQSsRKDkeB2FE=
 github.com/cheekybits/genny v1.0.0/go.mod h1:+tQajlRqAUrPI7DOSpB0XAqZYtQakVtB7wXkRAgjxjQ=
@@ -14,8 +14,8 @@ github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d/go.mod h1:ma
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/deepch/vdk v0.0.0-20210410074645-9f799014f4d4 h1:Pc+bqHHkqkcUJoml+KdqFwou5yVeZc/NRFOEl1aqTzs=
-github.com/deepch/vdk v0.0.0-20210410074645-9f799014f4d4/go.mod h1:EZi580zgIZQOVwMcApOE/rTxuWCHvP/9yAFkUro14LI=
+github.com/deepch/vdk v0.0.0-20210419175955-2eeda69894cc h1:dzGZcwqFim8FyaFHxevbrGBeJsDbFc3a0SAL31hXnAo=
+github.com/deepch/vdk v0.0.0-20210419175955-2eeda69894cc/go.mod h1:EZi580zgIZQOVwMcApOE/rTxuWCHvP/9yAFkUro14LI=
 github.com/eclipse/paho.mqtt.golang v1.3.2/go.mod h1:eTzb4gxwwyWpqBUHGQZ4ABAV7+Jgm1PklsYT/eo8Hcc=
 github.com/eclipse/paho.mqtt.golang v1.3.3 h1:Fh1zsLniMFJByLqKrSB9ZRjkbpU0k1Xne23ZqEE/O08=
 github.com/eclipse/paho.mqtt.golang v1.3.3/go.mod h1:eTzb4gxwwyWpqBUHGQZ4ABAV7+Jgm1PklsYT/eo8Hcc=
