@@ -160,7 +160,7 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 
 		switch connectionState {
 		case webrtc.ICEConnectionStateFailed:
-			if err := peerConnection.Close(); err != nil {
+			if err := closePeerConnection(peerConnection); err != nil {
 				w.logger.Panic().Err(err).Msg("could not close peer connection")
 			}
 			w.logger.Debug().Msg("peer connection has been closed")
@@ -228,6 +228,24 @@ func (w *WebRTC) signalCandidate(peerConnection *webrtc.PeerConnection, ch <-cha
 		}
 		w.logger.Debug().Str("candidate", c).Msg("successfully added an ICE candidate")
 	}
+}
+
+// closePeerConnection tidies RTPSender and remvoes track from peer connection.
+// It's used after a subscriber peer connection fails.
+// A publisher calls this has no effect.
+func closePeerConnection(peerConnection *webrtc.PeerConnection) error {
+	if peerConnection == nil {
+		return nil
+	}
+	for _, sender := range peerConnection.GetSenders() {
+		if err := sender.Stop(); err != nil {
+			return fmt.Errorf("could not stop RTP sender: %w", err)
+		}
+		if err := peerConnection.RemoveTrack(sender); err != nil {
+			return fmt.Errorf("could not remove track: %w", err)
+		}
+	}
+	return peerConnection.Close()
 }
 
 // sendRTCP sends a PLI on an interval so that the publisher is pushing a keyframe every rtcpPLIInterval
