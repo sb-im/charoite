@@ -117,33 +117,7 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 
 	// Set the handler for ICE connection state
 	// This will notify you when the peer has connected/disconnected
-	peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-		p.logger.Debug().Str("state", connectionState.String()).Msg("connection state has changed")
-		if connectionState == webrtc.ICEConnectionStateFailed {
-			if err = peerConnection.Close(); err != nil {
-				p.logger.Panic().Err(err).Msg("closing PeerConnection")
-			}
-			p.logger.Info().Msg("PeerConnection has been closed")
-
-			n := atomic.LoadUint32(&p.burstRetriesNo)
-			if n > maxBurstRetries {
-				p.logger.Info().Dur("interval", burstRetriesGroupInternval).Msg("maximum burst retries reached, waiting for an interval time to continue next burst retries")
-				<-time.NewTimer(burstRetriesGroupInternval).C
-				// Reset counter after burst retries group interval.
-				atomic.StoreUint32(&p.burstRetriesNo, 0)
-			}
-			// currying call function.
-			p.logger.Info().Uint32("retry_no", n+1).Msg("retry creating peer connection")
-			if err = p.createPeerConnection(videoTrack); err != nil {
-				p.logger.Err(err).Msg("failed to create peer connection")
-			}
-			atomic.AddUint32(&p.burstRetriesNo, 1)
-		}
-		if connectionState == webrtc.ICEConnectionStateConnected {
-			// If connection is successful, whether it's retried or not, counter should be reset to zero.
-			atomic.StoreUint32(&p.burstRetriesNo, 0)
-		}
-	})
+	peerConnection.OnICEConnectionStateChange(p.handleICEConnectionStateChange(peerConnection, videoTrack))
 
 	offer, err := peerConnection.CreateOffer(nil)
 	if err != nil {
@@ -189,6 +163,38 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 	return nil
 }
 
+func (p *publisher) handleICEConnectionStateChange(peerConnection *webrtc.PeerConnection, videoTrack webrtc.TrackLocal) func(connectionState webrtc.ICEConnectionState) {
+	return func(connectionState webrtc.ICEConnectionState) {
+		p.logger.Debug().Str("state", connectionState.String()).Msg("connection state has changed")
+
+		if connectionState == webrtc.ICEConnectionStateFailed {
+			if err := closePeerConnection(peerConnection); err != nil {
+				p.logger.Panic().Err(err).Msg("closing PeerConnection")
+			}
+			p.logger.Info().Msg("PeerConnection has been closed")
+
+			n := atomic.LoadUint32(&p.burstRetriesNo)
+			if n == maxBurstRetries {
+				p.logger.Info().Dur("interval", burstRetriesGroupInternval).Msg("maximum burst retries reached, waiting for an interval time to continue next burst retries")
+				<-time.NewTimer(burstRetriesGroupInternval).C
+				// Reset counter after burst retries group interval.
+				atomic.StoreUint32(&p.burstRetriesNo, 0)
+			}
+			// currying call function.
+			p.logger.Info().Uint32("retry_no", n+1).Msg("retry creating peer connection")
+			if err := p.createPeerConnection(videoTrack); err != nil {
+				p.logger.Err(err).Msg("failed to create peer connection")
+			}
+			atomic.AddUint32(&p.burstRetriesNo, 1)
+		}
+
+		if connectionState == webrtc.ICEConnectionStateConnected {
+			// If connection is successful, whether it's retried or not, counter should be reset to zero.
+			atomic.StoreUint32(&p.burstRetriesNo, 0)
+		}
+	}
+}
+
 func (p *publisher) signalCandidate(peerConnection *webrtc.PeerConnection, ch <-chan string) {
 	// TODO: Stop adding ICE candidate when after signaling succeeded, that is, to exit the loop.
 	// Just set a timer is not enough.
@@ -200,6 +206,23 @@ func (p *publisher) signalCandidate(peerConnection *webrtc.PeerConnection, ch <-
 		}
 		p.logger.Debug().Str("candidate", c).Msg("successfully added an ICE candidate")
 	}
+}
+
+// closePeerConnection tidies RTPSender and remvoes track from peer connection.
+// It's used after peer connection fails.
+func closePeerConnection(peerConnection *webrtc.PeerConnection) error {
+	if peerConnection == nil {
+		return nil
+	}
+	for _, sender := range peerConnection.GetSenders() {
+		if err := sender.Stop(); err != nil {
+			return fmt.Errorf("could not stop RTP sender: %w", err)
+		}
+		if err := peerConnection.RemoveTrack(sender); err != nil {
+			return fmt.Errorf("could not remove track: %w", err)
+		}
+	}
+	return peerConnection.Close()
 }
 
 // processRTCP reads incoming RTCP packets
