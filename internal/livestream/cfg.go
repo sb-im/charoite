@@ -1,29 +1,35 @@
 package livestream
 
 type RTPBroadcastConfigOptions struct {
-	TopicConfigOptions
+	MQTTClientConfigOptions
 	WebRTCConfigOptions
 	RTPSourceConfigOptions
 }
 
 type RTSPBroadcastConfigOptions struct {
-	TopicConfigOptions
+	MQTTClientConfigOptions
 	WebRTCConfigOptions
 	RTSPSourceConfigOptions
 }
 
 type broadcastConfigOptions struct {
-	TopicConfigOptions
+	MQTTClientConfigOptions
 	WebRTCConfigOptions
 }
 
-type TopicConfigOptions struct {
-	OfferTopic  string
-	AnswerTopic string
+type MQTTClientConfigOptions struct {
+	OfferTopic               string
+	AnswerTopicSuffix        string
+	CandidateSendTopicSuffix string // Opposite to cloud's CandidateRecvTopicSuffix topic
+	CandidateRecvTopicSuffix string // Opposite to cloud's CandidateSendTopicSuffix topic.
+	Qos                      uint
+	Retained                 bool
 }
 
 type WebRTCConfigOptions struct {
-	ICEServer string
+	ICEServer  string
+	Username   string
+	Credential string
 }
 
 type RTPSourceConfigOptions struct {
