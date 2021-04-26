@@ -13,6 +13,7 @@ import (
 	"github.com/urfave/cli/v2/altsrc"
 
 	"github.com/SB-IM/skywalker/internal/broadcast"
+	"github.com/SB-IM/skywalker/internal/broadcast/cfg"
 )
 
 // Command returns a broadcast command.
@@ -25,19 +26,19 @@ func Command() *cli.Command {
 
 		mc mqtt.Client
 
-		mqttConfigOptions     mqttclient.ConfigOptions
-		topicConfigOptions    broadcast.TopicConfigOptions
-		webRTCConfigOptions   broadcast.WebRTCConfigOptions
-		wsServerConfigOptions broadcast.WSServerConfigOptions
+		mqttConfigOptions       mqttclient.ConfigOptions
+		mqttClientConfigOptions cfg.MQTTClientConfigOptions
+		webRTCConfigOptions     cfg.WebRTCConfigOptions
+		serverConfigOptions     cfg.ServerConfigOptions
 	)
 
 	flags := func() (flags []cli.Flag) {
 		for _, v := range [][]cli.Flag{
 			loadConfigFlag(),
 			mqttFlags(&mqttConfigOptions),
-			topicFlags(&topicConfigOptions),
+			mqttClientFlags(&mqttClientConfigOptions),
 			webRTCFlags(&webRTCConfigOptions),
-			wsFlags(&wsServerConfigOptions),
+			serverFlags(&serverConfigOptions),
 		} {
 			flags = append(flags, v...)
 		}
@@ -71,10 +72,10 @@ func Command() *cli.Command {
 			return nil
 		},
 		Action: func(c *cli.Context) error {
-			svc := broadcast.New(ctx, broadcast.ConfigOptions{
-				WebRTCConfigOptions:   webRTCConfigOptions,
-				TopicConfigOptions:    topicConfigOptions,
-				WSServerConfigOptions: wsServerConfigOptions,
+			svc := broadcast.New(ctx, &cfg.ConfigOptions{
+				WebRTCConfigOptions:     webRTCConfigOptions,
+				MQTTClientConfigOptions: mqttClientConfigOptions,
+				ServerConfigOptions:     serverConfigOptions,
 			})
 			err := svc.Broadcast()
 			if err != nil {
@@ -135,7 +136,7 @@ func mqttFlags(mqttConfigOptions *mqttclient.ConfigOptions) []cli.Flag {
 	}
 }
 
-func topicFlags(topicConfigOptions *broadcast.TopicConfigOptions) []cli.Flag {
+func mqttClientFlags(topicConfigOptions *cfg.MQTTClientConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "topic-offer",
@@ -145,16 +146,44 @@ func topicFlags(topicConfigOptions *broadcast.TopicConfigOptions) []cli.Flag {
 			Destination: &topicConfigOptions.OfferTopic,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "topic-answer",
-			Usage:       "MQTT topic for WebRTC SDP answer signaling",
+			Name:        "topic-answer-suffix",
+			Usage:       "MQTT topic suffix for WebRTC SDP answer signaling",
 			Value:       "/edge/livestream/signal/answer",
 			DefaultText: "/edge/livestream/signal/answer",
-			Destination: &topicConfigOptions.AnswerTopic,
+			Destination: &topicConfigOptions.AnswerTopicSuffix,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "topic-candidate-send-suffix",
+			Usage:       "MQTT topic suffix for WebRTC candidate sending, and the sending topic of edge is /edge/livestream/signal/candidate/send",
+			Value:       "/edge/livestream/signal/candidate/recv",
+			DefaultText: "/edge/livestream/signal/candidate/recv",
+			Destination: &topicConfigOptions.CandidateSendTopicSuffix,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "topic-candidate-recv-suffix",
+			Usage:       "MQTT topic suffix for WebRTC candidate receiving, and the receiving topic of edge is /edge/livestream/signal/candidate/recv", //nolint:lll
+			Value:       "/edge/livestream/signal/candidate/send",
+			DefaultText: "/edge/livestream/signal/candidate/send",
+			Destination: &topicConfigOptions.CandidateRecvTopicSuffix,
+		}),
+		altsrc.NewUintFlag(&cli.UintFlag{
+			Name:        "qos",
+			Usage:       "MQTT client qos for WebRTC SDP signaling",
+			Value:       0,
+			DefaultText: "0",
+			Destination: &topicConfigOptions.Qos,
+		}),
+		altsrc.NewBoolFlag(&cli.BoolFlag{
+			Name:        "retained",
+			Usage:       "MQTT client setting retainsion for WebRTC SDP signaling",
+			Value:       false,
+			DefaultText: "false",
+			Destination: &topicConfigOptions.Retained,
 		}),
 	}
 }
 
-func webRTCFlags(webRTCConfigOptions *broadcast.WebRTCConfigOptions) []cli.Flag {
+func webRTCFlags(webRTCConfigOptions *cfg.WebRTCConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "ice-server",
@@ -163,31 +192,45 @@ func webRTCFlags(webRTCConfigOptions *broadcast.WebRTCConfigOptions) []cli.Flag 
 			DefaultText: "stun:stun.l.google.com:19302",
 			Destination: &webRTCConfigOptions.ICEServer,
 		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "ice-server-username",
+			Usage:       "ICE server username",
+			Value:       "",
+			DefaultText: "",
+			Destination: &webRTCConfigOptions.Username,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "ice-server-credential",
+			Usage:       "ICE server credential",
+			Value:       "",
+			DefaultText: "",
+			Destination: &webRTCConfigOptions.Credential,
+		}),
+		altsrc.NewBoolFlag(&cli.BoolFlag{
+			Name:        "enable-frontend",
+			Usage:       "Enable webRTC frontend server",
+			Value:       false,
+			DefaultText: "false",
+			Destination: &webRTCConfigOptions.EnableFrontend,
+		}),
 	}
 }
 
-func wsFlags(wsServerConfigOptions *broadcast.WSServerConfigOptions) []cli.Flag {
+func serverFlags(serverConfigOptions *cfg.ServerConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "ws-host",
-			Usage:       "Host of WebSocket server",
+			Name:        "host",
+			Usage:       "Host of webRTC signaling server",
 			Value:       "0.0.0.0",
 			DefaultText: "0.0.0.0",
-			Destination: &wsServerConfigOptions.Host,
+			Destination: &serverConfigOptions.Host,
 		}),
 		altsrc.NewIntFlag(&cli.IntFlag{
-			Name:        "ws-port",
-			Usage:       "Port of WebSocket server",
+			Name:        "port",
+			Usage:       "Port of webRTC signaling server",
 			Value:       8080,
 			DefaultText: "8080",
-			Destination: &wsServerConfigOptions.Port,
-		}),
-		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "ws-path",
-			Usage:       "HTTP path of broadcast service",
-			Value:       "/ws/webrtc",
-			DefaultText: "/ws/webrtc",
-			Destination: &wsServerConfigOptions.Path,
+			Destination: &serverConfigOptions.Port,
 		}),
 	}
 }

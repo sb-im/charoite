@@ -23,17 +23,19 @@ RUN --mount=type=ssh,id=github git config --global url."git@github.com:".instead
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -tags timetzdata -ldflags="-w -s" -a -installsuffix cgo -o broadcast ./cmd
+RUN CGO_ENABLED=0 GOOS=linux go build -tags timetzdata -ldflags="-w -s" -a -installsuffix cgo -o skywalker ./cmd
 
 FROM scratch
 
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=0 /src/broadcast /
+COPY --from=0 /src/skywalker /
 
 ENV DEBUG_MQTT_CLIENT=false
 
 VOLUME [ "/config" ]
 
-ENTRYPOINT [ "/broadcast" ]
+EXPOSE 8080
+
+ENTRYPOINT [ "/skywalker" ]
 
 CMD [ "--debug", "broadcast", "-c", "/config/config.yaml" ]

@@ -1,3 +1,5 @@
 .idea
 config/config.dev.yaml
 .env
+config/config.docker.yaml
+skywalker

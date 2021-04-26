@@ -17,12 +17,14 @@ RUN --mount=type=ssh,id=github git config --global url."git@github.com:".instead
 
 COPY . .
 
-RUN GOOS=linux go build -race -tags timetzdata -o broadcast ./cmd
+RUN GOOS=linux go build -race -tags timetzdata -o skywalker ./cmd
 
 ENV DEBUG_MQTT_CLIENT=false
 
 VOLUME [ "/config" ]
 
-ENTRYPOINT [ "/src/broadcast" ]
+VOLUME [ "/src/e2e" ]
+
+ENTRYPOINT [ "/src/skywalker" ]
 
 CMD [ "--debug", "broadcast", "-c", "/config/config.yaml" ]

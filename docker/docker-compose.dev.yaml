@@ -1,46 +1,67 @@
 version: "3.9"
 services:
   livestream:
-    build:
-      context: ../../sphinx
-      dockerfile: docker/Dockerfile.livestream.dev
+    image: ghcr.io/sb-im/sphinx:latest-dev-amd64
     container_name: livestream
     command:
       - --debug
       - livestream
       - -c
       - /config/config.yaml
+    ports:
+      - "5004:5004/udp"
     environment:
       - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
     volumes:
-      - ../../sphinx/config/config.dev.yaml:/config/config.yaml
-      - /etc/machine-id:/etc/machine-id
+      - ../../sphinx/config/config.docker.yaml:/config/config.yaml:ro
+      - /etc/machine-id:/etc/machine-id:ro
     depends_on:
       - mosquitto
       - broadcast
     restart: on-failure
+    logging: &loki
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/api/prom/push"
+        loki-retries: "5"
+        loki-batch-size: "400"
 
   broadcast:
-    build:
-      context: ../
-      dockerfile: docker/Dockerfile.broadcast.dev
+    image: ghcr.io/sb-im/skywalker:latest-dev
     container_name: broadcast
     command:
       - --debug
       - broadcast
       - -c
       - /config/config.yaml
+    ports:
+      - "8080:8080"
     environment:
       - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
     volumes:
-      - ../config/config.dev.yaml:/config/config.yaml
+      - ../config/config.docker.yaml:/config/config.yaml:ro
     depends_on:
       - mosquitto
     restart: on-failure
+    logging: *loki
 
   mosquitto:
     image: eclipse-mosquitto:2
     container_name: mosquitto
     volumes:
-      - ../config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ../config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
     restart: on-failure
+    logging: *loki
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    logging: *loki
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    logging: *loki
