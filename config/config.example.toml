@@ -1,0 +1,29 @@
+[mqtt]
+clientID = "mqtt_edge"
+password = "password"
+server = "tcp://mosquitto:1883"
+username = "user"
+
+[mqtt_client]
+topic_answer_prefix = "/edge/livestream/signal/answer"
+topic_offer = "/edge/livestream/signal/offer"
+
+# topic_candidate_send_prefix is opposite to cloud's topic_candidate_recv_prefix topic
+topic_candidate_send_prefix = "/edge/livestream/signal/candidate/send"
+# topic_candidate_recv_prefix is opposite to cloud's topic_candidate_send_prefix topic
+topic_candidate_recv_prefix = "/edge/livestream/signal/candidate/recv"
+
+qos = 0
+retained = false
+
+[webrtc]
+ice_server = "stun:stun.l.google.com:19302"
+ice_server_credential = ""
+ice_server_username = ""
+
+[rtp]
+host = "0.0.0.0"
+port = 5004
+
+[rtsp]
+addr = "rtsp://127.0.0.1:1234"

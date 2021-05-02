@@ -35,5 +35,3 @@ ENV DEBUG_MQTT_CLIENT=false
 VOLUME [ "/config" ]
 
 ENTRYPOINT [ "/sphinx" ]
-
-CMD [ "--debug", "livestream", "-c", "/config/config.yaml" ]

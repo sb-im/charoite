@@ -29,7 +29,7 @@ func (p *publisher) sendOffer(sdp *webrtc.SessionDescription) error {
 // The caller must check if result in channel is nil.
 func (p *publisher) recvAnswer() <-chan *webrtc.SessionDescription {
 	ch := make(chan *webrtc.SessionDescription, 1)
-	topic := p.config.AnswerTopicSuffix + "/" + p.meta.Id + "/" + strconv.Itoa(int(p.meta.TrackSource))
+	topic := p.config.AnswerTopicPrefix + "/" + p.meta.Id + "/" + strconv.Itoa(int(p.meta.TrackSource))
 	// Receive remote description with MQTT.
 	t := p.client.Subscribe(topic, byte(p.config.Qos), func(c mqtt.Client, m mqtt.Message) {
 		defer func() {
@@ -66,13 +66,13 @@ func (p *publisher) sendCandidate(candidate *webrtc.ICECandidate) error {
 	if err != nil {
 		return fmt.Errorf("could not encode candidate: %w", err)
 	}
-	topic := p.config.CandidateSendTopicSuffix + "/" + p.meta.Id + "/" + strconv.Itoa(int(p.meta.TrackSource))
+	topic := p.config.CandidateSendTopicPrefix + "/" + p.meta.Id + "/" + strconv.Itoa(int(p.meta.TrackSource))
 	t := p.client.Publish(topic, byte(p.config.Qos), p.config.Retained, payload)
 	// Handle the token in a go routine so this loop keeps sending messages regardless of delivery status
 	go func() {
 		<-t.Done()
 		if t.Error() != nil {
-			p.logger.Err(t.Error()).Msgf("could not publish to %s", p.config.CandidateSendTopicSuffix)
+			p.logger.Err(t.Error()).Msgf("could not publish to %s", p.config.CandidateSendTopicPrefix)
 		}
 	}()
 	return nil
@@ -85,7 +85,7 @@ func (p *publisher) sendCandidate(candidate *webrtc.ICECandidate) error {
 func (p *publisher) recvCandidate() <-chan string {
 	// TODO: Figure how to properly close channel.
 	ch := make(chan string, 2) // Make buffer 2 because we have at least 2 sendings.
-	topic := p.config.CandidateRecvTopicSuffix + "/" + p.meta.Id + "/" + strconv.Itoa(int(p.meta.TrackSource))
+	topic := p.config.CandidateRecvTopicPrefix + "/" + p.meta.Id + "/" + strconv.Itoa(int(p.meta.TrackSource))
 	// Receive remote ICE candidate with MQTT.
 	t := p.client.Subscribe(topic, byte(p.config.Qos), func(c mqtt.Client, m mqtt.Message) {
 		candidate, err := pb.DecodeCandidate(m.Payload())

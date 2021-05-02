@@ -7,13 +7,13 @@ services:
       - --debug
       - livestream
       - -c
-      - /config/config.yaml
+      - /config/config.toml
     ports:
       - "5004:5004/udp"
     environment:
       - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
     volumes:
-      - ../config/config.docker.yaml:/config/config.yaml:ro
+      - ../config/config.docker.toml:/config/config.toml:ro
       - /etc/machine-id:/etc/machine-id:ro
     depends_on:
       - mosquitto

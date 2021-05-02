@@ -19,9 +19,9 @@ type broadcastConfigOptions struct {
 
 type MQTTClientConfigOptions struct {
 	OfferTopic               string
-	AnswerTopicSuffix        string
-	CandidateSendTopicSuffix string // Opposite to cloud's CandidateRecvTopicSuffix topic
-	CandidateRecvTopicSuffix string // Opposite to cloud's CandidateSendTopicSuffix topic.
+	AnswerTopicPrefix        string
+	CandidateSendTopicPrefix string // Opposite to cloud's CandidateRecvTopicPrefix topic
+	CandidateRecvTopicPrefix string // Opposite to cloud's CandidateSendTopicPrefix topic.
 	Qos                      uint
 	Retained                 bool
 }

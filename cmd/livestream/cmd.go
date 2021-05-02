@@ -15,6 +15,8 @@ import (
 	"github.com/SB-IM/sphinx/internal/livestream"
 )
 
+const configFlagName = "config"
+
 // Command returns a livestream command.
 func Command() *cli.Command {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -53,7 +55,7 @@ func Command() *cli.Command {
 		Before: func(c *cli.Context) error {
 			if err := altsrc.InitInputSourceWithContext(
 				flags,
-				altsrc.NewYamlSourceFromFlagFunc("config"),
+				altsrc.NewTomlSourceFromFlagFunc(configFlagName),
 			)(c); err != nil {
 				return err
 			}
@@ -115,11 +117,11 @@ func Command() *cli.Command {
 func loadConfigFlag() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
-			Name:        "config",
+			Name:        configFlagName,
 			Aliases:     []string{"c"},
 			Usage:       "Config file path",
-			Value:       "config/config.yaml",
-			DefaultText: "config/config.yaml",
+			Value:       "config/config.toml",
+			DefaultText: "config/config.toml",
 		},
 	}
 }
@@ -127,27 +129,27 @@ func loadConfigFlag() []cli.Flag {
 func mqttFlags(mqttConfigOptions *mqttclient.ConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "mqtt-server",
+			Name:        "mqtt.server",
 			Usage:       "MQTT server address",
 			Value:       "tcp://mosquitto:1883",
 			DefaultText: "tcp://mosquitto:1883",
 			Destination: &mqttConfigOptions.Server,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "mqtt-clientID",
+			Name:        "mqtt.clientID",
 			Usage:       "MQTT client id",
 			Value:       "mqtt_edge",
 			DefaultText: "mqtt_edge",
 			Destination: &mqttConfigOptions.ClientID,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "mqtt-username",
+			Name:        "mqtt.username",
 			Usage:       "MQTT broker username",
 			Value:       "",
 			Destination: &mqttConfigOptions.Username,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "mqtt-password",
+			Name:        "mqtt.password",
 			Usage:       "MQTT broker password",
 			Value:       "",
 			Destination: &mqttConfigOptions.Password,
@@ -158,42 +160,42 @@ func mqttFlags(mqttConfigOptions *mqttclient.ConfigOptions) []cli.Flag {
 func mqttClientFlags(topicConfigOptions *livestream.MQTTClientConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "topic-offer",
+			Name:        "mqtt_client.topic_offer",
 			Usage:       "MQTT topic for WebRTC SDP offer signaling",
 			Value:       "/edge/livestream/signal/offer",
 			DefaultText: "/edge/livestream/signal/offer",
 			Destination: &topicConfigOptions.OfferTopic,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "topic-answer-suffix",
-			Usage:       "MQTT topic suffix for WebRTC SDP answer signaling",
+			Name:        "mqtt_client.topic_answer_prefix",
+			Usage:       "MQTT topic prefix for WebRTC SDP answer signaling",
 			Value:       "/edge/livestream/signal/answer",
 			DefaultText: "/edge/livestream/signal/answer",
-			Destination: &topicConfigOptions.AnswerTopicSuffix,
+			Destination: &topicConfigOptions.AnswerTopicPrefix,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "topic-candidate-send-suffix",
-			Usage:       "MQTT topic suffix for WebRTC candidate sending, and the sending topic of cloud is /edge/livestream/signal/candidate/recv",
+			Name:        "mqtt_client.topic_candidate_send_prefix",
+			Usage:       "MQTT topic prefix for WebRTC candidate sending, and the sending topic of cloud is /edge/livestream/signal/candidate/recv",
 			Value:       "/edge/livestream/signal/candidate/send",
 			DefaultText: "/edge/livestream/signal/candidate/send",
-			Destination: &topicConfigOptions.CandidateSendTopicSuffix,
+			Destination: &topicConfigOptions.CandidateSendTopicPrefix,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "topic-candidate-recv-suffix",
-			Usage:       "MQTT topic suffix for WebRTC candidate receiving, and the receiving topic of cloud is /edge/livestream/signal/candidate/send", //nolint:lll
+			Name:        "mqtt_client.topic_candidate_recv_prefix",
+			Usage:       "MQTT topic prefix for WebRTC candidate receiving, and the receiving topic of cloud is /edge/livestream/signal/candidate/send", //nolint:lll
 			Value:       "/edge/livestream/signal/candidate/recv",
 			DefaultText: "/edge/livestream/signal/candidate/recv",
-			Destination: &topicConfigOptions.CandidateRecvTopicSuffix,
+			Destination: &topicConfigOptions.CandidateRecvTopicPrefix,
 		}),
 		altsrc.NewUintFlag(&cli.UintFlag{
-			Name:        "qos",
+			Name:        "mqtt_client.qos",
 			Usage:       "MQTT client qos for WebRTC SDP signaling",
 			Value:       0,
 			DefaultText: "0",
 			Destination: &topicConfigOptions.Qos,
 		}),
 		altsrc.NewBoolFlag(&cli.BoolFlag{
-			Name:        "retained",
+			Name:        "mqtt_client.retained",
 			Usage:       "MQTT client setting retainsion for WebRTC SDP signaling",
 			Value:       false,
 			DefaultText: "false",
@@ -205,21 +207,21 @@ func mqttClientFlags(topicConfigOptions *livestream.MQTTClientConfigOptions) []c
 func webRTCFlags(webRTCConfigOptions *livestream.WebRTCConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "ice-server",
+			Name:        "webrtc.ice_server",
 			Usage:       "ICE server address for webRTC",
 			Value:       "stun:stun.l.google.com:19302",
 			DefaultText: "stun:stun.l.google.com:19302",
 			Destination: &webRTCConfigOptions.ICEServer,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "ice-server-username",
+			Name:        "webrtc.ice_server_username",
 			Usage:       "ICE server username for webRTC",
 			Value:       "",
 			DefaultText: "",
 			Destination: &webRTCConfigOptions.Username,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "ice-server-credential",
+			Name:        "webrtc.ice_server_credential",
 			Usage:       "ICE server credential for webRTC",
 			Value:       "",
 			DefaultText: "",
@@ -231,14 +233,14 @@ func webRTCFlags(webRTCConfigOptions *livestream.WebRTCConfigOptions) []cli.Flag
 func rtpFlags(rtpConfigOptions *livestream.RTPSourceConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "rtp-host",
+			Name:        "rtp.host",
 			Usage:       "Host of RTP server",
 			Value:       "0.0.0.0",
 			DefaultText: "0.0.0.0",
 			Destination: &rtpConfigOptions.RTPHost,
 		}),
 		altsrc.NewIntFlag(&cli.IntFlag{
-			Name:        "rtp-port",
+			Name:        "rtp.port",
 			Usage:       "Port of RTP server",
 			Value:       5004,
 			DefaultText: "5004",
@@ -250,7 +252,7 @@ func rtpFlags(rtpConfigOptions *livestream.RTPSourceConfigOptions) []cli.Flag {
 func rtspFlags(rtspConfigOptions *livestream.RTSPSourceConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "rtsp-addr",
+			Name:        "rtsp.addr",
 			Usage:       "Address of RTSP server",
 			Value:       "",
 			Destination: &rtspConfigOptions.RTSPAddr,

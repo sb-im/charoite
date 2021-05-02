@@ -12,11 +12,11 @@ IMAGE?=ghcr.io/sb-im/sphinx:latest-dev
 
 .PHONY: run
 run:
-	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug livestream -c config/config.dev.yaml
+	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug livestream -c config/config.dev.toml
 
 .PHONY: build
 build:
-	@GOARCH=arm64 go build -o $(PROJECT_NAME) ./cmd
+	@go build -o $(PROJECT_NAME) ./cmd
 
 .PHONY: lint
 lint:
