@@ -19,10 +19,19 @@ retained = false
 [webrtc]
 enable_frontend = false
 
-ice_server = "stun:stun.l.google.com:19302"
-ice_server_credential = ""
-ice_server_username = ""
+ice_server = "turn:example.com:3478"
+ice_server_credential = "password"
+ice_server_username = "user"
 
 [signal_server]
 host = "0.0.0.0"
 port = 8080
+
+[turn]
+port = 3478
+public_ip = "127.0.0.1"
+realm = "example.com"
+relay_max_port = 55000
+relay_min_port = 50000
+username = "user"
+password = "password"

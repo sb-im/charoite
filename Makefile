@@ -10,9 +10,13 @@ PROJECT_DIR?=/home/$(CURRENT_USER)/go/src/github.com/SB-IM/skywalker
 # Project image repo.
 IMAGE?=ghcr.io/sb-im/skywalker:latest-dev
 
-.PHONY: run
-run:
+.PHONY: run-broadcast
+run-broadcast:
 	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug broadcast -c config/config.dev.toml
+
+.PHONY: run-turn
+run-turn:
+	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug turn -c config/config.dev.toml
 
 .PHONY: build
 build:
