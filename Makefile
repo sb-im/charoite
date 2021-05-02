@@ -12,7 +12,7 @@ IMAGE?=ghcr.io/sb-im/skywalker:latest-dev
 
 .PHONY: run
 run:
-	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug broadcast -c config/config.dev.yaml
+	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug broadcast -c config/config.dev.toml
 
 .PHONY: build
 build:

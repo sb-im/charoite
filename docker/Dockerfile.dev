@@ -26,5 +26,3 @@ VOLUME [ "/config" ]
 VOLUME [ "/src/e2e" ]
 
 ENTRYPOINT [ "/src/skywalker" ]
-
-CMD [ "--debug", "broadcast", "-c", "/config/config.yaml" ]

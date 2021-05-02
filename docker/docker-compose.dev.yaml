@@ -7,13 +7,11 @@ services:
       - --debug
       - livestream
       - -c
-      - /config/config.yaml
+      - /config/config.toml
     ports:
       - "5004:5004/udp"
-    environment:
-      - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
     volumes:
-      - ../../sphinx/config/config.docker.yaml:/config/config.yaml:ro
+      - ../../sphinx/config/config.docker.toml:/config/config.toml:ro
       - /etc/machine-id:/etc/machine-id:ro
     depends_on:
       - mosquitto
@@ -33,13 +31,11 @@ services:
       - --debug
       - broadcast
       - -c
-      - /config/config.yaml
+      - /config/config.toml
     ports:
       - "8080:8080"
-    environment:
-      - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
     volumes:
-      - ../config/config.docker.yaml:/config/config.yaml:ro
+      - ../config/config.docker.toml:/config/config.toml:ro
     depends_on:
       - mosquitto
     restart: on-failure

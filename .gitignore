@@ -1,5 +1,5 @@
 .idea
-config/config.dev.yaml
+config/config.dev.toml
 .env
-config/config.docker.yaml
+config/config.docker.toml
 skywalker

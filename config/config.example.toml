@@ -1,0 +1,28 @@
+[mqtt]
+client_id = "mqtt_cloud"
+password = "password"
+server = "tcp://mosquitto:1883"
+username = "user"
+
+[mqtt_client]
+topic_answer_prefix = "/edge/livestream/signal/answer"
+topic_offer = "/edge/livestream/signal/offer"
+
+# topic_candidate_send is opposite to edge's topic_candidate_recv_prefix topic
+topic_candidate_send_prefix = "/edge/livestream/signal/candidate/recv"
+# topic_candidate_recv_prefix is opposite to edge's topic_candidate_send_prefix topic
+topic_candidate_recv_prefix = "/edge/livestream/signal/candidate/send"
+
+qos = 0
+retained = false
+
+[webrtc]
+enable_frontend = false
+
+ice_server = "stun:stun.l.google.com:19302"
+ice_server_credential = ""
+ice_server_username = ""
+
+[signal_server]
+host = "0.0.0.0"
+port = 8080
