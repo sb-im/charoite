@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3"
 services:
   livestream:
     image: ghcr.io/sb-im/sphinx:latest-dev-amd64
@@ -7,18 +7,18 @@ services:
       - --debug
       - livestream
       - -c
-      - /config/config.yaml
+      - /config/config.toml
     ports:
       - "5004:5004/udp"
-    environment:
-      - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
     volumes:
-      - ../../sphinx/config/config.docker.yaml:/config/config.yaml:ro
+      - ../../sphinx/config/config.docker.toml:/config/config.toml:ro
       - /etc/machine-id:/etc/machine-id:ro
     depends_on:
       - mosquitto
       - broadcast
-    restart: on-failure
+      - turn
+      - loki
+    restart: always
     logging: &loki
       driver: loki
       options:
@@ -33,16 +33,32 @@ services:
       - --debug
       - broadcast
       - -c
-      - /config/config.yaml
+      - /config/config.toml
     ports:
       - "8080:8080"
-    environment:
-      - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
     volumes:
-      - ../config/config.docker.yaml:/config/config.yaml:ro
+      - ../config/config.docker.toml:/config/config.toml:ro
     depends_on:
       - mosquitto
-    restart: on-failure
+      - turn
+      - loki
+    restart: always
+    logging: *loki
+
+  turn:
+    image: ghcr.io/sb-im/skywalker:latest-dev
+    container_name: turn
+    command:
+      - --debug
+      - turn
+      - -c
+      - /config/config.toml
+    network_mode: host
+    volumes:
+      - ../config/config.docker.toml:/config/config.toml:ro
+    depends_on:
+      - loki
+    restart: always
     logging: *loki
 
   mosquitto:
@@ -50,7 +66,9 @@ services:
     container_name: mosquitto
     volumes:
       - ../config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-    restart: on-failure
+    depends_on:
+      - loki
+    restart: always
     logging: *loki
 
   loki:
@@ -64,4 +82,5 @@ services:
     image: grafana/grafana:latest
     ports:
       - "3000:3000"
+    restart: always
     logging: *loki

@@ -69,13 +69,13 @@ func (p *Publisher) sendCandidate(meta *pb.Meta) webrtcx.SendCandidateFunc {
 		if err != nil {
 			return fmt.Errorf("could not encode candidate: %w", err)
 		}
-		topic := p.config.CandidateSendTopicSuffix + "/" + meta.Id + "/" + strconv.Itoa(int(meta.TrackSource))
+		topic := p.config.CandidateSendTopicPrefix + "/" + meta.Id + "/" + strconv.Itoa(int(meta.TrackSource))
 		t := p.client.Publish(topic, byte(p.config.Qos), p.config.Retained, payload)
 		// Handle the token in a go routine so this loop keeps sending messages regardless of delivery status
 		go func() {
 			<-t.Done()
 			if t.Error() != nil {
-				p.logger.Err(t.Error()).Msgf("could not publish to %s", p.config.CandidateSendTopicSuffix)
+				p.logger.Err(t.Error()).Msgf("could not publish to %s", p.config.CandidateSendTopicPrefix)
 			}
 		}()
 		return nil
@@ -90,7 +90,7 @@ func (p *Publisher) recvCandidate(meta *pb.Meta) webrtcx.RecvCandidateFunc {
 	return func() <-chan string {
 		// TODO: Figure how to properly close channel.
 		ch := make(chan string, 2) // Make buffer 2 because we have at least 2 sendings.
-		topic := p.config.CandidateRecvTopicSuffix + "/" + meta.Id + "/" + strconv.Itoa(int(meta.TrackSource))
+		topic := p.config.CandidateRecvTopicPrefix + "/" + meta.Id + "/" + strconv.Itoa(int(meta.TrackSource))
 		// Receive remote ICE candidate with MQTT.
 		t := p.client.Subscribe(topic, byte(p.config.Qos), func(c mqtt.Client, m mqtt.Message) {
 			candidate, err := pb.DecodeCandidate(m.Payload())
@@ -144,7 +144,7 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 		}
 
 		// The publishing topic is unique to each edge device and is determined by above receiving message payload.
-		answerTopic := p.config.AnswerTopicSuffix + "/" + offer.Meta.Id + "/" + strconv.Itoa(int(offer.Meta.TrackSource))
+		answerTopic := p.config.AnswerTopicPrefix + "/" + offer.Meta.Id + "/" + strconv.Itoa(int(offer.Meta.TrackSource))
 		t := c.Publish(answerTopic, byte(p.config.Qos), p.config.Retained, payload)
 		<-t.Done()
 		if t.Error() != nil {

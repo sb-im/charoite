@@ -37,5 +37,3 @@ VOLUME [ "/config" ]
 EXPOSE 8080
 
 ENTRYPOINT [ "/skywalker" ]
-
-CMD [ "--debug", "broadcast", "-c", "/config/config.yaml" ]

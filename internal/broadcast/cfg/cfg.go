@@ -20,9 +20,9 @@ type WebRTCConfigOptions struct {
 
 type MQTTClientConfigOptions struct {
 	OfferTopic               string
-	AnswerTopicSuffix        string
-	CandidateSendTopicSuffix string // Opposite to edge's CandidateRecvTopicSuffix topic
-	CandidateRecvTopicSuffix string // Opposite to edge's CandidateSendTopicSuffix topic.
+	AnswerTopicPrefix        string
+	CandidateSendTopicPrefix string // Opposite to edge's CandidateRecvTopicPrefix topic
+	CandidateRecvTopicPrefix string // Opposite to edge's CandidateSendTopicPrefix topic.
 	Qos                      uint
 	Retained                 bool
 }
