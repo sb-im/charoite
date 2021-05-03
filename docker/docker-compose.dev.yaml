@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3"
 services:
   livestream:
     image: ghcr.io/sb-im/sphinx:latest-dev-amd64
@@ -10,18 +10,16 @@ services:
       - /config/config.toml
     ports:
       - "5004:5004/udp"
-    environment:
-      - DEBUG_MQTT_CLIENT="${DEBUG_MQTT_CLIENT:-true}"
     volumes:
       - ../config/config.docker.toml:/config/config.toml:ro
       - /etc/machine-id:/etc/machine-id:ro
     depends_on:
       - mosquitto
-    restart: on-failure
+    restart: always
 
   mosquitto:
     image: eclipse-mosquitto:2
     container_name: mosquitto
     volumes:
       - ../config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-    restart: on-failure
+    restart: always
