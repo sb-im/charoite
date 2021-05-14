@@ -77,19 +77,19 @@ func Command() *cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			// Publish live stream.
-			rtpStream := livestream.NewDronePublisher(ctx, &livestream.DroneBroadcastConfigOptions{
+			dronePublisher := livestream.NewDronePublisher(ctx, &livestream.DroneBroadcastConfigOptions{
 				MQTTClientConfigOptions: topicConfigOptions,
 				WebRTCConfigOptions:     webRTCConfigOptions,
 				StreamSource:            droneStreamConfigOptions,
 			})
-			rtspStream := livestream.NewDeportPublisher(ctx, &livestream.DeportBroadcastConfigOptions{
+			deportPublisher := livestream.NewDeportPublisher(ctx, &livestream.DeportBroadcastConfigOptions{
 				MQTTClientConfigOptions: topicConfigOptions,
 				WebRTCConfigOptions:     webRTCConfigOptions,
 				StreamSource:            deportStreamConfigOptions,
 			})
 
 			errChan := make(chan error, 2)
-			for _, s := range []livestream.Livestream{rtpStream, rtspStream} {
+			for _, s := range []livestream.Livestream{dronePublisher, deportPublisher} {
 				s := s
 				go func() {
 					if err := s.Publish(); err != nil {
@@ -270,6 +270,20 @@ func deportStreamFlags(options *livestream.StreamSource) []cli.Flag {
 			Usage:       "Address of RTSP server",
 			Value:       "",
 			Destination: &options.Addr,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "deport_stream.host",
+			Usage:       "Host of RTP server",
+			Value:       "0.0.0.0",
+			DefaultText: "0.0.0.0",
+			Destination: &options.Host,
+		}),
+		altsrc.NewIntFlag(&cli.IntFlag{
+			Name:        "deport_stream.port",
+			Usage:       "Port of RTP server",
+			Value:       5005,
+			DefaultText: "5005",
+			Destination: &options.Port,
 		}),
 	}
 }
