@@ -10,13 +10,19 @@ PROJECT_DIR?=/home/$(CURRENT_USER)/go/src/github.com/SB-IM/sphinx
 # Project image repo.
 IMAGE?=ghcr.io/sb-im/sphinx:latest-dev
 
+# Docker-compose file.
+DOCKER_COMPOSE_FILE?=docker/docker-compose.yml
+
+# Docker-compose service.
+SERVICE?=
+
 .PHONY: run
 run:
-	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug livestream -c config/config.dev.yaml
+	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug livestream -c config/config.dev.toml
 
-.PHONY: build
-build:
-	@GOARCH=arm64 go build -o $(PROJECT_NAME) ./cmd
+.PHONY: sphinx
+sphinx:
+	@go build -o $(PROJECT_NAME) ./cmd
 
 .PHONY: lint
 lint:
@@ -44,15 +50,15 @@ push:
 # Note: '--env-file' value is relative to '-f' value's directory.
 .PHONY: up
 up: down image
-	@docker-compose -f docker/docker-compose.dev.yaml up -d
+	@docker-compose -f $(DOCKER_COMPOSE_FILE) up -d
 
 .PHONY: down
 down:
-	@docker-compose -f docker/docker-compose.dev.yaml down --remove-orphans
+	@docker-compose -f $(DOCKER_COMPOSE_FILE) down --remove-orphans
 
 .PHONY: logs
 logs:
-	@docker-compose -f docker/docker-compose.dev.yaml logs -t -f
+	@docker-compose -f $(DOCKER_COMPOSE_FILE) logs -f $(SERVICE)
 
 .PHONY: broker
 broker:
@@ -61,3 +67,7 @@ broker:
 .PHONY: stop-broker
 stop-broker:
 	@docker stop mosquitto
+
+.PHONY: clean
+clean:
+	@rm -rf sphinx

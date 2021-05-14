@@ -3,8 +3,6 @@ package livestream
 import (
 	"fmt"
 	"net"
-	"strconv"
-	"strings"
 
 	"github.com/pion/webrtc/v3"
 	"github.com/rs/zerolog"
@@ -14,14 +12,17 @@ import (
 func rtpListener(address string, videoTrack webrtc.TrackLocal, logger *zerolog.Logger) error {
 	videoTrackSample := videoTrack.(*webrtc.TrackLocalStaticRTP)
 
-	host, port := parseRTPAddress(address)
+	udpAddr, err := net.ResolveUDPAddr("udp", address)
+	if err != nil {
+		return fmt.Errorf("could not resolve address of %s into udp address: %w", address, err)
+	}
 
-	listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(host), Port: port})
+	listener, err := net.ListenUDP("udp", udpAddr)
 	if err != nil {
 		return fmt.Errorf("listen UDP: %w", err)
 	}
-	logger.Info().Str("host", host).Int("port", port).Msg("UDP server started")
 	defer listener.Close()
+	logger.Info().Str("address", udpAddr.String()).Msg("UDP server started")
 
 	inboundRTPPacket := make([]byte, 1600) // UDP MTU
 	for {
@@ -34,18 +35,4 @@ func rtpListener(address string, videoTrack webrtc.TrackLocal, logger *zerolog.L
 			return fmt.Errorf("could not write videoTrackSample: %w", err)
 		}
 	}
-}
-
-func parseRTPAddress(address string) (string, int) {
-	ss := strings.Split(address, ":")
-	if len(ss) != 2 {
-		panic("invalid address")
-	}
-
-	port, err := strconv.Atoi(ss[1])
-	if err != nil {
-		panic(err)
-	}
-
-	return ss[0], port
 }

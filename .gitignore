@@ -1,6 +1,13 @@
+# Jetbrains IDE
 .idea
-config/config.dev.yaml
-config/config.docker.yaml
+
+# Development config files
+config/config.dev.toml
+config/config.docker.toml
 .env
+
+# Log file
 log
+
+# Binary file
 sphinx
