@@ -28,7 +28,7 @@ type Livestream interface {
 	Meta() *pb.Meta
 }
 
-func NewRTPPublisher(ctx context.Context, configOptions *RTPBroadcastConfigOptions) Livestream {
+func NewDronePublisher(ctx context.Context, configOptions *DroneBroadcastConfigOptions) Livestream {
 	return &publisher{
 		meta: &pb.Meta{
 			Id:          id,
@@ -41,15 +41,16 @@ func NewRTPPublisher(ctx context.Context, configOptions *RTPBroadcastConfigOptio
 		client:      mqttclient.FromContext(ctx),
 		createTrack: videoTrackRTP,
 		streamSource: func() string {
-			return configOptions.RTPHost + ":" + strconv.Itoa(configOptions.RTPPort)
+			return configOptions.Host + ":" + strconv.Itoa(configOptions.Port)
 		},
 		liveStream: rtpListener,
 		logger:     *log.Ctx(ctx),
 	}
 }
 
-func NewRTSPPublisher(ctx context.Context, configOptions *RTSPBroadcastConfigOptions) Livestream {
-	return &publisher{
+func NewDeportPublisher(ctx context.Context, configOptions *DeportBroadcastConfigOptions) Livestream {
+	// Default deport stream source is rtsp.
+	publisher := &publisher{
 		meta: &pb.Meta{
 			Id:          id,
 			TrackSource: pb.TrackSource_MONITOR,
@@ -61,11 +62,22 @@ func NewRTSPPublisher(ctx context.Context, configOptions *RTSPBroadcastConfigOpt
 		client:      mqttclient.FromContext(ctx),
 		createTrack: videoTrackSample,
 		streamSource: func() string {
-			return configOptions.RTSPAddr
+			return configOptions.Addr
 		},
 		liveStream: consumeRTSP,
 		logger:     *log.Ctx(ctx),
 	}
+
+	// If it's rtp stream source.
+	if configOptions.Protocol == protocolRTP {
+		publisher.createTrack = videoTrackRTP
+		publisher.streamSource = func() string {
+			return configOptions.Host + ":" + strconv.Itoa(configOptions.Port)
+		}
+		publisher.liveStream = rtpListener
+	}
+
+	return publisher
 }
 
 func machineID() ([]byte, error) {

@@ -19,8 +19,8 @@ const (
 	// maxBurstRetries is the maximum burst retry numbers.
 	maxBurstRetries = 10
 
-	// burstRetriesGroupInternval is the interval between burst retries group.
-	burstRetriesGroupInternval = 1 * time.Minute
+	// burstRetriesGroupInternal is the interval between burst retries group.
+	burstRetriesGroupInternal = 1 * time.Minute
 )
 
 // publisher implements Livestream interface.
@@ -175,8 +175,8 @@ func (p *publisher) handleICEConnectionStateChange(peerConnection *webrtc.PeerCo
 
 			n := atomic.LoadUint32(&p.burstRetriesNo)
 			if n == maxBurstRetries {
-				p.logger.Info().Dur("interval", burstRetriesGroupInternval).Msg("maximum burst retries reached, waiting for an interval time to continue next burst retries")
-				<-time.NewTimer(burstRetriesGroupInternval).C
+				p.logger.Info().Dur("interval", burstRetriesGroupInternal).Msg("maximum burst retries reached, waiting for an interval time to continue next burst retries")
+				<-time.NewTimer(burstRetriesGroupInternal).C
 				// Reset counter after burst retries group interval.
 				atomic.StoreUint32(&p.burstRetriesNo, 0)
 			}

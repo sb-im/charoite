@@ -1,15 +1,20 @@
 package livestream
 
-type RTPBroadcastConfigOptions struct {
+const (
+	protocolRTP  = "rtp"
+	protocolRTSP = "rtsp"
+)
+
+type DroneBroadcastConfigOptions struct {
 	MQTTClientConfigOptions
 	WebRTCConfigOptions
-	RTPSourceConfigOptions
+	StreamSource // Currently only RTP is supported
 }
 
-type RTSPBroadcastConfigOptions struct {
+type DeportBroadcastConfigOptions struct {
 	MQTTClientConfigOptions
 	WebRTCConfigOptions
-	RTSPSourceConfigOptions
+	StreamSource // Currently mainly RTSP, the other one is RTP
 }
 
 type broadcastConfigOptions struct {
@@ -32,11 +37,17 @@ type WebRTCConfigOptions struct {
 	Credential string
 }
 
+type StreamSource struct {
+	Protocol string // rtp or rtsp
+	RTSPSourceConfigOptions
+	RTPSourceConfigOptions
+}
+
 type RTPSourceConfigOptions struct {
-	RTPHost string
-	RTPPort int
+	Host string
+	Port int
 }
 
 type RTSPSourceConfigOptions struct {
-	RTSPAddr string
+	Addr string
 }

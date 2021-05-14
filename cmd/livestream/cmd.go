@@ -27,11 +27,11 @@ func Command() *cli.Command {
 
 		mc mqtt.Client
 
-		mqttConfigOptions   mqttclient.ConfigOptions
-		topicConfigOptions  livestream.MQTTClientConfigOptions
-		webRTCConfigOptions livestream.WebRTCConfigOptions
-		rtpConfigOptions    livestream.RTPSourceConfigOptions
-		rtspConfigOptions   livestream.RTSPSourceConfigOptions
+		mqttConfigOptions         mqttclient.ConfigOptions
+		topicConfigOptions        livestream.MQTTClientConfigOptions
+		webRTCConfigOptions       livestream.WebRTCConfigOptions
+		droneStreamConfigOptions  livestream.StreamSource
+		deportStreamConfigOptions livestream.StreamSource
 	)
 
 	flags := func() (flags []cli.Flag) {
@@ -40,8 +40,8 @@ func Command() *cli.Command {
 			mqttFlags(&mqttConfigOptions),
 			mqttClientFlags(&topicConfigOptions),
 			webRTCFlags(&webRTCConfigOptions),
-			rtpFlags(&rtpConfigOptions),
-			rtspFlags(&rtspConfigOptions),
+			droneStreamFlags(&droneStreamConfigOptions),
+			deportStreamFlags(&deportStreamConfigOptions),
 		} {
 			flags = append(flags, v...)
 		}
@@ -77,15 +77,15 @@ func Command() *cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			// Publish live stream.
-			rtpStream := livestream.NewRTPPublisher(ctx, &livestream.RTPBroadcastConfigOptions{
+			rtpStream := livestream.NewDronePublisher(ctx, &livestream.DroneBroadcastConfigOptions{
 				MQTTClientConfigOptions: topicConfigOptions,
 				WebRTCConfigOptions:     webRTCConfigOptions,
-				RTPSourceConfigOptions:  rtpConfigOptions,
+				StreamSource:            droneStreamConfigOptions,
 			})
-			rtspStream := livestream.NewRTSPPublisher(ctx, &livestream.RTSPBroadcastConfigOptions{
+			rtspStream := livestream.NewDeportPublisher(ctx, &livestream.DeportBroadcastConfigOptions{
 				MQTTClientConfigOptions: topicConfigOptions,
 				WebRTCConfigOptions:     webRTCConfigOptions,
-				RTSPSourceConfigOptions: rtspConfigOptions,
+				StreamSource:            deportStreamConfigOptions,
 			})
 
 			errChan := make(chan error, 2)
@@ -126,136 +126,150 @@ func loadConfigFlag() []cli.Flag {
 	}
 }
 
-func mqttFlags(mqttConfigOptions *mqttclient.ConfigOptions) []cli.Flag {
+func mqttFlags(options *mqttclient.ConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt.server",
 			Usage:       "MQTT server address",
 			Value:       "tcp://mosquitto:1883",
 			DefaultText: "tcp://mosquitto:1883",
-			Destination: &mqttConfigOptions.Server,
+			Destination: &options.Server,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt.clientID",
 			Usage:       "MQTT client id",
 			Value:       "mqtt_edge",
 			DefaultText: "mqtt_edge",
-			Destination: &mqttConfigOptions.ClientID,
+			Destination: &options.ClientID,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt.username",
 			Usage:       "MQTT broker username",
 			Value:       "",
-			Destination: &mqttConfigOptions.Username,
+			Destination: &options.Username,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt.password",
 			Usage:       "MQTT broker password",
 			Value:       "",
-			Destination: &mqttConfigOptions.Password,
+			Destination: &options.Password,
 		}),
 	}
 }
 
-func mqttClientFlags(topicConfigOptions *livestream.MQTTClientConfigOptions) []cli.Flag {
+func mqttClientFlags(options *livestream.MQTTClientConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt_client.topic_offer",
 			Usage:       "MQTT topic for WebRTC SDP offer signaling",
 			Value:       "/edge/livestream/signal/offer",
 			DefaultText: "/edge/livestream/signal/offer",
-			Destination: &topicConfigOptions.OfferTopic,
+			Destination: &options.OfferTopic,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt_client.topic_answer_prefix",
 			Usage:       "MQTT topic prefix for WebRTC SDP answer signaling",
 			Value:       "/edge/livestream/signal/answer",
 			DefaultText: "/edge/livestream/signal/answer",
-			Destination: &topicConfigOptions.AnswerTopicPrefix,
+			Destination: &options.AnswerTopicPrefix,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt_client.topic_candidate_send_prefix",
 			Usage:       "MQTT topic prefix for WebRTC candidate sending, and the sending topic of cloud is /edge/livestream/signal/candidate/recv",
 			Value:       "/edge/livestream/signal/candidate/send",
 			DefaultText: "/edge/livestream/signal/candidate/send",
-			Destination: &topicConfigOptions.CandidateSendTopicPrefix,
+			Destination: &options.CandidateSendTopicPrefix,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt_client.topic_candidate_recv_prefix",
 			Usage:       "MQTT topic prefix for WebRTC candidate receiving, and the receiving topic of cloud is /edge/livestream/signal/candidate/send", //nolint:lll
 			Value:       "/edge/livestream/signal/candidate/recv",
 			DefaultText: "/edge/livestream/signal/candidate/recv",
-			Destination: &topicConfigOptions.CandidateRecvTopicPrefix,
+			Destination: &options.CandidateRecvTopicPrefix,
 		}),
 		altsrc.NewUintFlag(&cli.UintFlag{
 			Name:        "mqtt_client.qos",
 			Usage:       "MQTT client qos for WebRTC SDP signaling",
 			Value:       0,
 			DefaultText: "0",
-			Destination: &topicConfigOptions.Qos,
+			Destination: &options.Qos,
 		}),
 		altsrc.NewBoolFlag(&cli.BoolFlag{
 			Name:        "mqtt_client.retained",
 			Usage:       "MQTT client setting retainsion for WebRTC SDP signaling",
 			Value:       false,
 			DefaultText: "false",
-			Destination: &topicConfigOptions.Retained,
+			Destination: &options.Retained,
 		}),
 	}
 }
 
-func webRTCFlags(webRTCConfigOptions *livestream.WebRTCConfigOptions) []cli.Flag {
+func webRTCFlags(options *livestream.WebRTCConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "webrtc.ice_server",
 			Usage:       "ICE server address for webRTC",
 			Value:       "stun:stun.l.google.com:19302",
 			DefaultText: "stun:stun.l.google.com:19302",
-			Destination: &webRTCConfigOptions.ICEServer,
+			Destination: &options.ICEServer,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "webrtc.ice_server_username",
 			Usage:       "ICE server username for webRTC",
 			Value:       "",
 			DefaultText: "",
-			Destination: &webRTCConfigOptions.Username,
+			Destination: &options.Username,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "webrtc.ice_server_credential",
 			Usage:       "ICE server credential for webRTC",
 			Value:       "",
 			DefaultText: "",
-			Destination: &webRTCConfigOptions.Credential,
+			Destination: &options.Credential,
 		}),
 	}
 }
 
-func rtpFlags(rtpConfigOptions *livestream.RTPSourceConfigOptions) []cli.Flag {
+func droneStreamFlags(options *livestream.StreamSource) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "rtp.host",
+			Name:        "drone_stream.protocol",
+			Usage:       "Protocol of drone stream source",
+			Value:       "rtp",
+			DefaultText: "rtp",
+			Destination: &options.Protocol,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "drone_stream.host",
 			Usage:       "Host of RTP server",
 			Value:       "0.0.0.0",
 			DefaultText: "0.0.0.0",
-			Destination: &rtpConfigOptions.RTPHost,
+			Destination: &options.Host,
 		}),
 		altsrc.NewIntFlag(&cli.IntFlag{
-			Name:        "rtp.port",
+			Name:        "drone_stream.port",
 			Usage:       "Port of RTP server",
 			Value:       5004,
 			DefaultText: "5004",
-			Destination: &rtpConfigOptions.RTPPort,
+			Destination: &options.Port,
 		}),
 	}
 }
 
-func rtspFlags(rtspConfigOptions *livestream.RTSPSourceConfigOptions) []cli.Flag {
+func deportStreamFlags(options *livestream.StreamSource) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "rtsp.addr",
+			Name:        "deport_stream.protocol",
+			Usage:       "Protocol of deport stream source",
+			Value:       "rtsp",
+			DefaultText: "rtsp",
+			Destination: &options.Protocol,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "deport_stream.addr",
 			Usage:       "Address of RTSP server",
 			Value:       "",
-			Destination: &rtspConfigOptions.RTSPAddr,
+			Destination: &options.Addr,
 		}),
 	}
 }
