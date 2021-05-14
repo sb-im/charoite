@@ -13,6 +13,9 @@ IMAGE?=ghcr.io/sb-im/skywalker:latest-dev
 # Docker-compose file.
 DOCKER_COMPOSE_FILE?=docker/docker-compose.yml
 
+# Docker-compose service.
+SERVICE?=
+
 .PHONY: run-broadcast
 run-broadcast:
 	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug broadcast -c config/config.dev.toml
@@ -59,15 +62,7 @@ stop-broker:
 
 .PHONY: logs
 logs:
-	@docker-compose -f $(DOCKER_COMPOSE_FILE) logs -f
-
-.PHONY: log-livestream
-log-livestream:
-	@docker-compose -f $(DOCKER_COMPOSE_FILE) logs -f livestream
-
-.PHONY: log-broadcast
-log-broadcast:
-	@docker-compose -f $(DOCKER_COMPOSE_FILE) logs -f broadcast
+	@docker-compose -f $(DOCKER_COMPOSE_FILE) logs -f $(SERVICE)
 
 .PHONY: e2e-broadcast
 e2e-broadcast:
