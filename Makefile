@@ -16,16 +16,14 @@ DOCKER_COMPOSE_FILE?=docker/docker-compose.yml
 # Docker-compose service.
 SERVICE?=
 
-.PHONY: run-broadcast
-run-broadcast:
-	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug broadcast -c config/config.dev.toml
+# Skywalker service commands.
+COMMAND?=broadcast
 
-.PHONY: run-turn
-run-turn:
-	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug turn -c config/config.dev.toml
+.PHONY: run
+run:
+	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug $(COMMAND) -c config/config.dev.toml
 
-.PHONY: build
-build:
+skywalker:
 	@go build -race -o $(PROJECT_NAME) ./cmd
 
 .PHONY: lint
@@ -67,3 +65,7 @@ logs:
 .PHONY: e2e-broadcast
 e2e-broadcast:
 	@go run ./e2e/broadcast
+
+.PHONY: clean
+clean:
+	@rm -rf skywalker
