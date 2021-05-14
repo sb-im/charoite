@@ -10,6 +10,9 @@ PROJECT_DIR?=/home/$(CURRENT_USER)/go/src/github.com/SB-IM/skywalker
 # Project image repo.
 IMAGE?=ghcr.io/sb-im/skywalker:latest-dev
 
+# Docker-compose file.
+DOCKER_COMPOSE_FILE?=docker/docker-compose.yml
+
 .PHONY: run-broadcast
 run-broadcast:
 	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug broadcast -c config/config.dev.toml
@@ -40,11 +43,11 @@ push:
 # Note: '--env-file' value is relative to '-f' value's directory.
 .PHONY: up
 up: down image
-	@docker-compose -f docker/docker-compose.dev.yaml up -d
+	@docker-compose -f $(DOCKER_COMPOSE_FILE) up -d
 
 .PHONY: down
 down:
-	@docker-compose -f docker/docker-compose.dev.yaml down --remove-orphans
+	@docker-compose -f $(DOCKER_COMPOSE_FILE) down --remove-orphans
 
 .PHONY: broker
 broker:
@@ -56,15 +59,15 @@ stop-broker:
 
 .PHONY: logs
 logs:
-	@docker-compose -f docker/docker-compose.dev.yaml logs -f
+	@docker-compose -f $(DOCKER_COMPOSE_FILE) logs -f
 
 .PHONY: log-livestream
 log-livestream:
-	@docker-compose -f docker/docker-compose.dev.yaml logs -f livestream
+	@docker-compose -f $(DOCKER_COMPOSE_FILE) logs -f livestream
 
 .PHONY: log-broadcast
 log-broadcast:
-	@docker-compose -f docker/docker-compose.dev.yaml logs -f broadcast
+	@docker-compose -f $(DOCKER_COMPOSE_FILE) logs -f broadcast
 
 .PHONY: e2e-broadcast
 e2e-broadcast:
