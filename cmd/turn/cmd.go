@@ -83,56 +83,56 @@ func loadConfigFlag() []cli.Flag {
 	}
 }
 
-func turnConfigFlags(turnConfigOptions *turn.ConfigOptions) []cli.Flag {
+func turnConfigFlags(options *turn.ConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "turn.public_ip",
 			Usage:       "IP Address that TURN can be contacted by",
 			Value:       "127.0.0.1",
 			DefaultText: "127.0.0.1",
-			Destination: &turnConfigOptions.PublicIP,
+			Destination: &options.PublicIP,
 		}),
 		altsrc.NewIntFlag(&cli.IntFlag{
 			Name:        "turn.port",
 			Usage:       "Listening port",
 			Value:       3478,
 			DefaultText: "3478",
-			Destination: &turnConfigOptions.Port,
+			Destination: &options.Port,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "turn.username",
 			Usage:       "Username",
 			Value:       "user",
 			DefaultText: "user",
-			Destination: &turnConfigOptions.Username,
+			Destination: &options.Username,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "turn.password",
 			Usage:       "Password",
 			Value:       "password",
 			DefaultText: "password",
-			Destination: &turnConfigOptions.Password,
+			Destination: &options.Password,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "turn.realm",
 			Usage:       "Realm",
 			Value:       "example.com",
 			DefaultText: "example.com",
-			Destination: &turnConfigOptions.Realm,
+			Destination: &options.Realm,
 		}),
 		altsrc.NewUintFlag(&cli.UintFlag{
 			Name:        "turn.relay_min_port",
 			Usage:       "Minimum relay port",
 			Value:       50000,
 			DefaultText: "50000",
-			Destination: &turnConfigOptions.RelayMinPort,
+			Destination: &options.RelayMinPort,
 		}),
 		altsrc.NewUintFlag(&cli.UintFlag{
 			Name:        "turn.relay_max_port",
 			Usage:       "Maximum relay port",
 			Value:       55000,
 			DefaultText: "55000",
-			Destination: &turnConfigOptions.RelayMaxPort,
+			Destination: &options.RelayMaxPort,
 		}),
 	}
 }

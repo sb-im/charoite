@@ -107,132 +107,132 @@ func loadConfigFlag() []cli.Flag {
 	}
 }
 
-func mqttFlags(mqttConfigOptions *mqttclient.ConfigOptions) []cli.Flag {
+func mqttFlags(options *mqttclient.ConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt.server",
 			Usage:       "MQTT server address",
 			Value:       "tcp://mosquitto:1883",
 			DefaultText: "tcp://mosquitto:1883",
-			Destination: &mqttConfigOptions.Server,
+			Destination: &options.Server,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt.clientID",
 			Usage:       "MQTT client id",
 			Value:       "mqtt_edge",
 			DefaultText: "mqtt_edge",
-			Destination: &mqttConfigOptions.ClientID,
+			Destination: &options.ClientID,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt.username",
 			Usage:       "MQTT broker username",
 			Value:       "",
-			Destination: &mqttConfigOptions.Username,
+			Destination: &options.Username,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt.password",
 			Usage:       "MQTT broker password",
 			Value:       "",
-			Destination: &mqttConfigOptions.Password,
+			Destination: &options.Password,
 		}),
 	}
 }
 
-func mqttClientFlags(topicConfigOptions *cfg.MQTTClientConfigOptions) []cli.Flag {
+func mqttClientFlags(options *cfg.MQTTClientConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt_client.topic_offer",
 			Usage:       "MQTT topic for WebRTC SDP offer signaling",
 			Value:       "/edge/livestream/signal/offer",
 			DefaultText: "/edge/livestream/signal/offer",
-			Destination: &topicConfigOptions.OfferTopic,
+			Destination: &options.OfferTopic,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt_client.topic_answer_prefix",
 			Usage:       "MQTT topic prefix for WebRTC SDP answer signaling",
 			Value:       "/edge/livestream/signal/answer",
 			DefaultText: "/edge/livestream/signal/answer",
-			Destination: &topicConfigOptions.AnswerTopicPrefix,
+			Destination: &options.AnswerTopicPrefix,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt_client.topic_candidate_send_prefix",
 			Usage:       "MQTT topic prefix for WebRTC candidate sending, and the sending topic of edge is /edge/livestream/signal/candidate/send",
 			Value:       "/edge/livestream/signal/candidate/recv",
 			DefaultText: "/edge/livestream/signal/candidate/recv",
-			Destination: &topicConfigOptions.CandidateSendTopicPrefix,
+			Destination: &options.CandidateSendTopicPrefix,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt_client.topic_candidate_recv_prefix",
 			Usage:       "MQTT topic prefix for WebRTC candidate receiving, and the receiving topic of edge is /edge/livestream/signal/candidate/recv", //nolint:lll
 			Value:       "/edge/livestream/signal/candidate/send",
 			DefaultText: "/edge/livestream/signal/candidate/send",
-			Destination: &topicConfigOptions.CandidateRecvTopicPrefix,
+			Destination: &options.CandidateRecvTopicPrefix,
 		}),
 		altsrc.NewUintFlag(&cli.UintFlag{
 			Name:        "mqtt_client.qos",
 			Usage:       "MQTT client qos for WebRTC SDP signaling",
 			Value:       0,
 			DefaultText: "0",
-			Destination: &topicConfigOptions.Qos,
+			Destination: &options.Qos,
 		}),
 		altsrc.NewBoolFlag(&cli.BoolFlag{
 			Name:        "mqtt_client.retained",
 			Usage:       "MQTT client setting retainsion for WebRTC SDP signaling",
 			Value:       false,
 			DefaultText: "false",
-			Destination: &topicConfigOptions.Retained,
+			Destination: &options.Retained,
 		}),
 	}
 }
 
-func webRTCFlags(webRTCConfigOptions *cfg.WebRTCConfigOptions) []cli.Flag {
+func webRTCFlags(options *cfg.WebRTCConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "webrtc.ice_server",
 			Usage:       "ICE server address for webRTC",
 			Value:       "stun:stun.l.google.com:19302",
 			DefaultText: "stun:stun.l.google.com:19302",
-			Destination: &webRTCConfigOptions.ICEServer,
+			Destination: &options.ICEServer,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "webrtc.ice_server_username",
 			Usage:       "ICE server username",
 			Value:       "",
 			DefaultText: "",
-			Destination: &webRTCConfigOptions.Username,
+			Destination: &options.Username,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "webrtc.ice_server_credential",
 			Usage:       "ICE server credential",
 			Value:       "",
 			DefaultText: "",
-			Destination: &webRTCConfigOptions.Credential,
+			Destination: &options.Credential,
 		}),
 		altsrc.NewBoolFlag(&cli.BoolFlag{
 			Name:        "webrtc.enable_frontend",
 			Usage:       "Enable webRTC frontend server",
 			Value:       false,
 			DefaultText: "false",
-			Destination: &webRTCConfigOptions.EnableFrontend,
+			Destination: &options.EnableFrontend,
 		}),
 	}
 }
 
-func serverFlags(serverConfigOptions *cfg.ServerConfigOptions) []cli.Flag {
+func serverFlags(options *cfg.ServerConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "signal_server.host",
 			Usage:       "Host of webRTC signaling server",
 			Value:       "0.0.0.0",
 			DefaultText: "0.0.0.0",
-			Destination: &serverConfigOptions.Host,
+			Destination: &options.Host,
 		}),
 		altsrc.NewIntFlag(&cli.IntFlag{
 			Name:        "signal_server.port",
 			Usage:       "Port of webRTC signaling server",
 			Value:       8080,
 			DefaultText: "8080",
-			Destination: &serverConfigOptions.Port,
+			Destination: &options.Port,
 		}),
 	}
 }
