@@ -13,12 +13,15 @@ IMAGE?=ghcr.io/sb-im/sphinx:latest-dev
 # Docker-compose file.
 DOCKER_COMPOSE_FILE?=docker/docker-compose.yml
 
+# Docker-compose service.
+SERVICE?=
+
 .PHONY: run
 run:
 	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug livestream -c config/config.dev.toml
 
-.PHONY: build
-build:
+.PHONY: sphinx
+sphinx:
 	@go build -o $(PROJECT_NAME) ./cmd
 
 .PHONY: lint
@@ -55,7 +58,7 @@ down:
 
 .PHONY: logs
 logs:
-	@docker-compose -f $(DOCKER_COMPOSE_FILE) logs -t -f
+	@docker-compose -f $(DOCKER_COMPOSE_FILE) logs -f $(SERVICE)
 
 .PHONY: broker
 broker:
@@ -64,3 +67,7 @@ broker:
 .PHONY: stop-broker
 stop-broker:
 	@docker stop mosquitto
+
+.PHONY: clean
+clean:
+	@rm -rf sphinx
