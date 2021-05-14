@@ -27,5 +27,10 @@ host = "0.0.0.0"
 port = 5004
 
 [deport_stream]
-protocol = "rtsp" # or rtp
+protocol = "rtsp"
 addr = "rtsp://127.0.0.1:1234"
+
+# rtp stream configuration for deport example
+# protocol = "rtp"
+# host = "0.0.0.0"
+# port = 5005 # use a different port from drone stream source port
