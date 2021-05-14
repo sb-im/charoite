@@ -60,8 +60,8 @@ func (s *Subscriber) Signal() http.Handler {
 	s.logger.Debug().Msg("registered signal HTTP handler")
 
 	if s.config.EnableFrontend {
-		r.Handle("/", http.FileServer(http.Dir("e2e/broadcast/static"))) // E2e static file server for debuging
-		s.logger.Debug().Msg("registered broadcast e2e static file server handler")
+		r.Handle("/v1/test/e2e/broadcast", http.StripPrefix("/v1/test/e2e/broadcast", http.FileServer(http.Dir("e2e/broadcast/static")))) // E2e static file server for debuging
+		s.logger.Debug().Str("address", "http://localhost:8080/v1/test/e2e/broadcast").Msg("registered broadcast e2e static file server handler")
 	}
 	return r
 }
