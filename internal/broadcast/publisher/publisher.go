@@ -128,14 +128,14 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 			Str("id", offer.Meta.Id).
 			Int32("track_source", int32(offer.Meta.TrackSource)).
 			Logger()
-		logger.Debug().Msg("received offer from edge")
+		logger.Info().Msg("received offer from edge")
 
 		answer, err := p.signalPeerConnection(&offer, &logger)
 		if err != nil {
 			logger.Err(err).Msg("failed to signal peer connection")
 			return
 		}
-		logger.Debug().Msg("Successfully signaled peer connection")
+		logger.Info().Msg("Successfully signaled peer connection")
 
 		payload, err := pb.EncodeSDP(answer, nil)
 		if err != nil {
@@ -151,7 +151,7 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 			p.logger.Err(t.Error()).Msgf("could not publish to %s", answerTopic)
 			return
 		}
-		logger.Debug().Str("answer_topic", answerTopic).Msg("sent answer to edge")
+		logger.Info().Str("answer_topic", answerTopic).Msg("sent answer to edge")
 	}
 }
 
@@ -169,7 +169,7 @@ func (p *Publisher) signalPeerConnection(offer *pb.SessionDescription, logger *z
 	if err != nil {
 		return nil, fmt.Errorf("could not create webRTC local video track: %w", err)
 	}
-	logger.Debug().Msg("created video track")
+	logger.Info().Msg("created video track")
 
 	w := webrtcx.New(
 		p.config.WebRTCConfigOptions,
@@ -184,7 +184,7 @@ func (p *Publisher) signalPeerConnection(offer *pb.SessionDescription, logger *z
 	if err := w.CreatePublisher(videoTrack); err != nil {
 		return nil, fmt.Errorf("failed to create webRTC publisher: %w", err)
 	}
-	logger.Debug().Msg("created publisher")
+	logger.Info().Msg("created publisher")
 
 	return <-w.SignalChan, nil
 }

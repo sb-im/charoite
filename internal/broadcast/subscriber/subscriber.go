@@ -57,7 +57,7 @@ func New(sessions *sync.Map, logger *zerolog.Logger, config cfg.WebRTCConfigOpti
 func (s *Subscriber) Signal() http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/v1/broadcast/signal", s.handleSignal()) // WebRTC SDP signaling. candidates trickling
-	s.logger.Debug().Msg("registered signal HTTP handler")
+	s.logger.Info().Msg("registered signal HTTP handler")
 
 	if s.config.EnableFrontend {
 		r.Handle("/v1/test/e2e/broadcast", http.StripPrefix("/v1/test/e2e/broadcast", http.FileServer(http.Dir("e2e/broadcast/static")))) // E2e static file server for debuging
@@ -101,7 +101,7 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 		var msg incomingMessage
 		if err := wsjson.Read(ctx, c, &msg); err != nil {
 			if websocket.CloseStatus(err) == websocket.StatusGoingAway {
-				s.logger.Debug().Msg("client closed connection")
+				s.logger.Info().Msg("client closed connection")
 			} else {
 				s.logger.Err(err).Msg("could not read message")
 				_ = replyErr(ctx, c, msg.ID, nil, httpx.ErrReadMessage)
@@ -123,7 +123,7 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 				return
 			}
 			logger := s.logger.With().Str("event_id", msg.ID).Str("id", offer.Meta.Id).Int32("track_source", int32(offer.Meta.TrackSource)).Logger()
-			logger.Debug().Msg("received offer from subscriber")
+			logger.Info().Msg("received offer from subscriber")
 
 			sessionID := offer.Meta.Id + strconv.Itoa(int(offer.Meta.TrackSource))
 			value, ok := s.sessions.Load(sessionID)
@@ -154,7 +154,7 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 				_ = replyErr(ctx, c, msg.ID, offer.Meta, httpx.ErrFailedToCreateSubscriber)
 				return
 			}
-			logger.Debug().Msg("successfully created subscriber")
+			logger.Info().Msg("successfully created subscriber")
 
 			// TODO: Timeout channel receiving to avoid blocking.
 			answer := <-wcx.SignalChan
@@ -174,7 +174,7 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 				s.logger.Err(err).Msg("could not write answer JSON")
 				return
 			}
-			logger.Debug().Msg("sent answer to subscriber")
+			logger.Info().Msg("sent answer to subscriber")
 		case "new-ice-candidate":
 			var candidate pb.ICECandidate
 			if err := json.Unmarshal(msg.Data, &candidate); err != nil {

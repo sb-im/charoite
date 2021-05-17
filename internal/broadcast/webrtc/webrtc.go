@@ -104,7 +104,7 @@ func (w *WebRTC) CreatePublisher(videoTrack *webrtc.TrackLocalStaticRTP) error {
 	if err := w.signalPeerConnection(peerConnection); err != nil {
 		return fmt.Errorf("failed to create peer connection: %w", err)
 	}
-	w.logger.Debug().Msg("created peer connection for publisher")
+	w.logger.Info().Msg("created peer connection for publisher")
 
 	return nil
 }
@@ -126,7 +126,7 @@ func (w *WebRTC) CreateSubscriber(videoTrack *webrtc.TrackLocalStaticRTP) error 
 	if err := w.signalPeerConnection(peerConnection); err != nil {
 		return fmt.Errorf("failed to create peer connection: %w", err)
 	}
-	w.logger.Debug().Msg("created peer connection for subscriber")
+	w.logger.Info().Msg("created peer connection for subscriber")
 
 	return nil
 }
@@ -150,20 +150,20 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 		if err := w.sendCandidate(c); err != nil {
 			w.logger.Err(err).Msg("could not send candidate")
 		}
-		w.logger.Debug().Msg("sent an ICE candidate")
+		w.logger.Info().Msg("sent an ICE candidate")
 	})
 
 	// Set the handler for ICE connection state
 	// This will notify you when the peer has connected/disconnected
 	peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-		w.logger.Debug().Str("state", connectionState.String()).Msg("ICE connection state has changed")
+		w.logger.Info().Str("state", connectionState.String()).Msg("ICE connection state has changed")
 
 		switch connectionState {
 		case webrtc.ICEConnectionStateFailed:
 			if err := closePeerConnection(peerConnection); err != nil {
 				w.logger.Panic().Err(err).Msg("could not close peer connection")
 			}
-			w.logger.Debug().Msg("peer connection has been closed")
+			w.logger.Info().Msg("peer connection has been closed")
 		case webrtc.ICEConnectionStateConnected:
 			// Register session after ICE state is connected.
 			w.registerSession()
@@ -199,7 +199,7 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 		if err := w.sendCandidate(c); err != nil {
 			return fmt.Errorf("could not send candidate: %w", err)
 		}
-		w.logger.Debug().Msg("sent an ICE candidate")
+		w.logger.Info().Msg("sent an ICE candidate")
 	}
 
 	return nil
@@ -226,7 +226,7 @@ func (w *WebRTC) signalCandidate(peerConnection *webrtc.PeerConnection, ch <-cha
 		}); err != nil {
 			w.logger.Err(err).Msg("could not add ICE candidate")
 		}
-		w.logger.Debug().Str("candidate", c).Msg("successfully added an ICE candidate")
+		w.logger.Info().Str("candidate", c).Msg("successfully added an ICE candidate")
 	}
 }
 

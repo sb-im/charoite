@@ -44,7 +44,7 @@ func (s *Service) Broadcast() error {
 	handler := sub.Signal()
 
 	server := s.newServer(handler)
-	s.logger.Debug().Str("host", s.config.Host).Int("port", s.config.Port).Msg("starting HTTP server")
+	s.logger.Info().Str("host", s.config.Host).Int("port", s.config.Port).Msg("starting HTTP server")
 	return server.ListenAndServe()
 }
 
