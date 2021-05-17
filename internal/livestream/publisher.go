@@ -54,17 +54,17 @@ func (p *publisher) Publish() error {
 	if err != nil {
 		return err
 	}
-	p.logger.Debug().Msg("created video track")
+	p.logger.Info().Msg("created video track")
 
 	if err := p.createPeerConnection(videoTrack); err != nil {
 		return fmt.Errorf("failed to create PeerConnection: %w", err)
 	}
-	p.logger.Debug().Msg("created PeerConnection")
+	p.logger.Info().Msg("created PeerConnection")
 
 	if err := p.liveStream(p.streamSource(), videoTrack, &p.logger); err != nil {
 		return fmt.Errorf("live stream failed: %w", err)
 	}
-	p.logger.Debug().Msg("live stream is over")
+	p.logger.Info().Msg("live stream is over")
 
 	return nil
 }
@@ -112,7 +112,7 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 		if err = p.sendCandidate(c); err != nil {
 			p.logger.Err(err).Msg("could not send candidate")
 		}
-		p.logger.Debug().Msg("sent an ICEcandidate")
+		p.logger.Info().Msg("sent an ICEcandidate")
 	})
 
 	// Set the handler for ICE connection state
@@ -131,7 +131,7 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 	if err := p.sendOffer(peerConnection.LocalDescription()); err != nil {
 		return fmt.Errorf("could not send offer: %w", err)
 	}
-	p.logger.Debug().Msg("sent local description offer")
+	p.logger.Info().Msg("sent local description offer")
 
 	// TODO: Timeout channel receiving to avoid blocking.
 	answer := <-answerChan
@@ -141,7 +141,7 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 	if err := peerConnection.SetRemoteDescription(*answer); err != nil {
 		return fmt.Errorf("could not set remote description: %w", err)
 	}
-	p.logger.Debug().Msg("received remote answer from cloud")
+	p.logger.Info().Msg("received remote answer from cloud")
 
 	// Signal candidate after setting remote description.
 	go p.signalCandidate(peerConnection, candidateChan)
@@ -157,7 +157,7 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 		if err := p.sendCandidate(c); err != nil {
 			return fmt.Errorf("could not send candidate: %w", err)
 		}
-		p.logger.Debug().Msg("sent an ICEcandidate")
+		p.logger.Info().Msg("sent an ICEcandidate")
 	}
 
 	return nil
@@ -165,7 +165,7 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 
 func (p *publisher) handleICEConnectionStateChange(peerConnection *webrtc.PeerConnection, videoTrack webrtc.TrackLocal) func(connectionState webrtc.ICEConnectionState) {
 	return func(connectionState webrtc.ICEConnectionState) {
-		p.logger.Debug().Str("state", connectionState.String()).Msg("connection state has changed")
+		p.logger.Info().Str("state", connectionState.String()).Msg("connection state has changed")
 
 		if connectionState == webrtc.ICEConnectionStateFailed {
 			if err := closePeerConnection(peerConnection); err != nil {
@@ -204,7 +204,7 @@ func (p *publisher) signalCandidate(peerConnection *webrtc.PeerConnection, ch <-
 		}); err != nil {
 			p.logger.Err(err).Msg("could not add ICE candidate")
 		}
-		p.logger.Debug().Str("candidate", c).Msg("successfully added an ICE candidate")
+		p.logger.Info().Str("candidate", c).Msg("successfully added an ICE candidate")
 	}
 }
 

@@ -35,13 +35,13 @@ func consumeRTSP(address string, videoTrack webrtc.TrackLocal, logger *zerolog.L
 
 		codecs := session.CodecData
 		for i, t := range codecs {
-			logger.Debug().Int("i", i).Str("type", t.Type().String()).Msg("stream codec")
+			logger.Info().Int("i", i).Str("type", t.Type().String()).Msg("stream codec")
 		}
 		if codecs[0].Type() != av.H264 {
 			return fmt.Errorf("wrong codec type: %s. RTSP feed must begin with a H264 codec", codecs[0].Type())
 		}
 		if len(codecs) != 1 {
-			logger.Debug().Msg("ignoring all but the first stream")
+			logger.Info().Msg("ignoring all but the first stream")
 		}
 
 		var previousTime time.Duration
