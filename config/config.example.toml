@@ -13,6 +13,8 @@ topic_candidate_send_prefix = "/edge/livestream/signal/candidate/recv"
 # topic_candidate_recv_prefix is opposite to edge's topic_candidate_send_prefix topic
 topic_candidate_recv_prefix = "/edge/livestream/signal/candidate/send"
 
+topic_hook_stream_prefix = "/edge/livestream/hook"
+
 qos = 0
 retained = false
 

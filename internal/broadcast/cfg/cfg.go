@@ -11,6 +11,11 @@ type PublisherConfigOptions struct {
 	WebRTCConfigOptions
 }
 
+type SubscriberConfigOptions struct {
+	MQTTClientConfigOptions
+	WebRTCConfigOptions
+}
+
 type WebRTCConfigOptions struct {
 	ICEServer      string
 	Username       string
@@ -23,6 +28,7 @@ type MQTTClientConfigOptions struct {
 	AnswerTopicPrefix        string
 	CandidateSendTopicPrefix string // Opposite to edge's CandidateRecvTopicPrefix topic
 	CandidateRecvTopicPrefix string // Opposite to edge's CandidateSendTopicPrefix topic.
+	HookStreamTopicPrefix    string
 	Qos                      uint
 	Retained                 bool
 }

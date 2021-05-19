@@ -40,7 +40,10 @@ func (s *Service) Broadcast() error {
 	})
 	pub.Signal()
 
-	sub := subscriber.New(&s.sessions, &s.logger, s.config.WebRTCConfigOptions)
+	sub := subscriber.New(s.client, &s.sessions, &s.logger, &cfg.SubscriberConfigOptions{
+		MQTTClientConfigOptions: s.config.MQTTClientConfigOptions,
+		WebRTCConfigOptions:     s.config.WebRTCConfigOptions,
+	})
 	handler := sub.Signal()
 
 	server := s.newServer(handler)

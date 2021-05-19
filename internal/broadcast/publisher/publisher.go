@@ -75,7 +75,7 @@ func (p *Publisher) sendCandidate(meta *pb.Meta) webrtcx.SendCandidateFunc {
 		go func() {
 			<-t.Done()
 			if t.Error() != nil {
-				p.logger.Err(t.Error()).Msgf("could not publish to %s", p.config.CandidateSendTopicPrefix)
+				p.logger.Err(t.Error()).Msgf("could not publish to %s", topic)
 			}
 		}()
 		return nil
@@ -177,6 +177,7 @@ func (p *Publisher) signalPeerConnection(offer *pb.SessionDescription, logger *z
 		p.sendCandidate(offer.Meta),
 		p.recvCandidate(offer.Meta),
 		p.registerSession(offer.Meta, videoTrack),
+		webrtcx.NoopHookStreamFunc,
 	)
 
 	// TODO: handle blocking case with timeout for channels.

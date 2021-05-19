@@ -168,6 +168,13 @@ func mqttClientFlags(options *cfg.MQTTClientConfigOptions) []cli.Flag {
 			DefaultText: "/edge/livestream/signal/candidate/send",
 			Destination: &options.CandidateRecvTopicPrefix,
 		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "mqtt_client.topic_hook_stream_prefix",
+			Usage:       "MQTT topic prefix for hooking of seeding stream",
+			Value:       "/edge/livestream/hook",
+			DefaultText: "/edge/livestream/hook",
+			Destination: &options.HookStreamTopicPrefix,
+		}),
 		altsrc.NewUintFlag(&cli.UintFlag{
 			Name:        "mqtt_client.qos",
 			Usage:       "MQTT client qos for WebRTC SDP signaling",
@@ -177,7 +184,7 @@ func mqttClientFlags(options *cfg.MQTTClientConfigOptions) []cli.Flag {
 		}),
 		altsrc.NewBoolFlag(&cli.BoolFlag{
 			Name:        "mqtt_client.retained",
-			Usage:       "MQTT client setting retainsion for WebRTC SDP signaling",
+			Usage:       "MQTT client setting retention for WebRTC SDP signaling",
 			Value:       false,
 			DefaultText: "false",
 			Destination: &options.Retained,

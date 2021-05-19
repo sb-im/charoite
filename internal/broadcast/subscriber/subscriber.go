@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	pb "github.com/SB-IM/pb/signal"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gorilla/mux"
 	"github.com/pion/webrtc/v3"
 	"github.com/rs/zerolog"
@@ -21,7 +22,8 @@ import (
 
 // Subscriber stands for a subscriber webRTC peer.
 type Subscriber struct {
-	config cfg.WebRTCConfigOptions
+	client mqtt.Client
+	config *cfg.SubscriberConfigOptions
 	logger zerolog.Logger
 
 	// sessions must be created before used by publisher and is shared between publishers ans subscribers.
@@ -44,9 +46,15 @@ type outgoingMessage struct {
 }
 
 // New returns a new Subscriber.
-func New(sessions *sync.Map, logger *zerolog.Logger, config cfg.WebRTCConfigOptions) *Subscriber {
+func New(
+	client mqtt.Client,
+	sessions *sync.Map,
+	logger *zerolog.Logger,
+	config *cfg.SubscriberConfigOptions,
+) *Subscriber {
 	l := logger.With().Str("component", "Subscriber").Logger()
 	return &Subscriber{
+		client:   client,
 		sessions: sessions,
 		config:   config,
 		logger:   l,
@@ -134,11 +142,12 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 			}
 
 			wcx := webrtcx.New(
-				s.config,
+				s.config.WebRTCConfigOptions,
 				&logger,
 				sendCandidate(ctx, c, offer.Meta),
 				recvCandidate(candidateChan[offer.Meta.TrackSource]),
 				webrtcx.NoopRegisterSessionFunc,
+				s.hookStream(offer.Meta),
 			)
 
 			var sdp webrtc.SessionDescription
@@ -209,6 +218,26 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 		default:
 			s.logger.Warn().Str("event", msg.Event).Msg("unknown event")
 		}
+	}
+}
+
+// hookStream only sends signal to drone track source.
+func (s *Subscriber) hookStream(meta *pb.Meta) webrtcx.HookStreamFunc {
+	if meta.TrackSource != pb.TrackSource_DRONE {
+		return webrtcx.NoopHookStreamFunc
+	}
+	return func() {
+		topic := s.config.HookStreamTopicPrefix + "/" + meta.Id + "/" + strconv.Itoa(int(meta.TrackSource))
+		t := s.client.Publish(topic, byte(s.config.Qos), s.config.Retained, []byte(""))
+		// Handle the token in a go routine so this loop keeps sending messages regardless of delivery status
+		go func() {
+			<-t.Done()
+			if t.Error() != nil {
+				s.logger.Err(t.Error()).Msgf("could not publish to %s", topic)
+			} else {
+				s.logger.Info().Str("topic", topic).Msg("Sent hook signal")
+			}
+		}()
 	}
 }
 
