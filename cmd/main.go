@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 
+	"github.com/SB-IM/sphinx/cmd/hookstream"
 	"github.com/SB-IM/sphinx/cmd/livestream"
 )
 
@@ -36,6 +37,7 @@ func run(args []string) error {
 		},
 		Commands: []*cli.Command{
 			livestream.Command(),
+			hookstream.Command(),
 		},
 	}
 

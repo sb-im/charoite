@@ -13,6 +13,9 @@ topic_candidate_send_prefix = "/edge/livestream/signal/candidate/send"
 # topic_candidate_recv_prefix is opposite to cloud's topic_candidate_send_prefix topic
 topic_candidate_recv_prefix = "/edge/livestream/signal/candidate/recv"
 
+# This topic is only for hookstream command.
+topic_hook_stream_prefix = "/edge/livestream/hook"
+
 qos = 0
 retained = false
 
@@ -34,3 +37,7 @@ addr = "rtsp://127.0.0.1:1234"
 # protocol = "rtp"
 # host = "0.0.0.0"
 # port = 5005 # use a different port from drone stream source port
+
+[hook_stream]
+service = "sbcameradronemulti.service"
+wait_timeout = "1s"

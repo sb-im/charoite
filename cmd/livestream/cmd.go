@@ -28,7 +28,7 @@ func Command() *cli.Command {
 		mc mqtt.Client
 
 		mqttConfigOptions         mqttclient.ConfigOptions
-		topicConfigOptions        livestream.MQTTClientConfigOptions
+		mqttClientConfigOptions   livestream.MQTTClientConfigOptions
 		webRTCConfigOptions       livestream.WebRTCConfigOptions
 		droneStreamConfigOptions  livestream.StreamSource
 		deportStreamConfigOptions livestream.StreamSource
@@ -38,7 +38,7 @@ func Command() *cli.Command {
 		for _, v := range [][]cli.Flag{
 			loadConfigFlag(),
 			mqttFlags(&mqttConfigOptions),
-			mqttClientFlags(&topicConfigOptions),
+			mqttClientFlags(&mqttClientConfigOptions),
 			webRTCFlags(&webRTCConfigOptions),
 			droneStreamFlags(&droneStreamConfigOptions),
 			deportStreamFlags(&deportStreamConfigOptions),
@@ -78,12 +78,12 @@ func Command() *cli.Command {
 		Action: func(c *cli.Context) error {
 			// Publish live stream.
 			dronePublisher := livestream.NewDronePublisher(ctx, &livestream.DroneBroadcastConfigOptions{
-				MQTTClientConfigOptions: topicConfigOptions,
+				MQTTClientConfigOptions: mqttClientConfigOptions,
 				WebRTCConfigOptions:     webRTCConfigOptions,
 				StreamSource:            droneStreamConfigOptions,
 			})
 			deportPublisher := livestream.NewDeportPublisher(ctx, &livestream.DeportBroadcastConfigOptions{
-				MQTTClientConfigOptions: topicConfigOptions,
+				MQTTClientConfigOptions: mqttClientConfigOptions,
 				WebRTCConfigOptions:     webRTCConfigOptions,
 				StreamSource:            deportStreamConfigOptions,
 			})
