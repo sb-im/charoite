@@ -1,7 +1,7 @@
 version: "3"
 services:
   livestream:
-    image: ghcr.io/sb-im/sphinx:latest-dev-amd64
+    image: ghcr.io/sb-im/sphinx:debug-amd64
     container_name: livestream
     command:
       - --debug
