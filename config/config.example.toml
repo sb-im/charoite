@@ -5,7 +5,7 @@ password = "password"
 server = "tcp://mosquitto:1883"
 
 [mqtt_client]
-topic_offer = "/edge/livestream/signal/offer"
+topic_offer_prefix = "/edge/livestream/signal/offer"
 topic_answer_prefix = "/edge/livestream/signal/answer"
 
 # topic_candidate_send_prefix is opposite to cloud's topic_candidate_recv_prefix topic

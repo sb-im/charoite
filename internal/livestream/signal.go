@@ -14,12 +14,16 @@ func (p *publisher) sendOffer(sdp *webrtc.SessionDescription) error {
 	if err != nil {
 		return fmt.Errorf("could not encode sdp: %w", err)
 	}
-	t := p.client.Publish(p.config.OfferTopic, byte(p.config.Qos), p.config.Retained, payload)
+	// Use a unique topic for each track source, so we can retain message.
+	// But if we use the same topic, only one track source client can retain message in the same topic
+	// the other message is replace by the new.
+	topic := p.config.OfferTopicPrefix + "/" + p.meta.Id + "/" + strconv.Itoa(int(p.meta.TrackSource))
+	t := p.client.Publish(topic, byte(p.config.Qos), p.config.Retained, payload)
 	// Handle the token in a go routine so this loop keeps sending messages regardless of delivery status
 	go func() {
 		<-t.Done()
 		if t.Error() != nil {
-			p.logger.Err(t.Error()).Msgf("could not publish to %s", p.config.OfferTopic)
+			p.logger.Err(t.Error()).Msgf("could not publish to %s", topic)
 		}
 	}()
 	return nil

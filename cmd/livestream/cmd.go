@@ -159,11 +159,11 @@ func mqttFlags(options *mqttclient.ConfigOptions) []cli.Flag {
 func mqttClientFlags(options *livestream.MQTTClientConfigOptions) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "mqtt_client.topic_offer",
-			Usage:       "MQTT topic for WebRTC SDP offer signaling",
+			Name:        "mqtt_client.topic_offer_prefix",
+			Usage:       "MQTT topic prefix for WebRTC SDP offer signaling",
 			Value:       "/edge/livestream/signal/offer",
 			DefaultText: "/edge/livestream/signal/offer",
-			Destination: &options.OfferTopic,
+			Destination: &options.OfferTopicPrefix,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "mqtt_client.topic_answer_prefix",

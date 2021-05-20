@@ -23,7 +23,7 @@ type broadcastConfigOptions struct {
 }
 
 type MQTTClientConfigOptions struct {
-	OfferTopic               string
+	OfferTopicPrefix         string
 	AnswerTopicPrefix        string
 	CandidateSendTopicPrefix string // Opposite to cloud's CandidateRecvTopicPrefix topic
 	CandidateRecvTopicPrefix string // Opposite to cloud's CandidateSendTopicPrefix topic.
