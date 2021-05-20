@@ -22,7 +22,9 @@ RUN --mount=type=ssh,id=github git config --global url."git@github.com:".instead
 
 COPY . .
 
-RUN make sphinx
+ARG DEBUG=false
+
+RUN DEBUG=${DEBUG} make sphinx
 
 FROM alpine AS bin
 

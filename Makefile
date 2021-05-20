@@ -6,7 +6,8 @@ PRIVATE_KEY_PATH ?= github=$(shell getent passwd "$(CURRENT_USER)" | cut -d: -f6
 # Enable docker buildkit.
 DOCKER_BUILDKIT = 1
 # Project image repo.
-IMAGE ?= ghcr.io/sb-im/sphinx:debug
+IMAGE ?= ghcr.io/sb-im/sphinx
+IMAGE_TAG ?= latest
 # OCI platform.
 OCI_PLATFORM ?= linux/arm64
 # Docker-compose file.
@@ -14,7 +15,7 @@ DOCKER_COMPOSE_FILE ?= docker/docker-compose.yml
 # Docker-compose service.
 SERVICE ?=
 
-# Version info for binaries
+# Version info for binaries.
 GIT_REVISION := $(shell git rev-parse --short HEAD)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 GIT_TAG := $(shell git describe --tags)
@@ -25,14 +26,19 @@ GO_LDFLAGS := -X $(VPREFIX).Branch=$(GIT_BRANCH) -X $(VPREFIX).Version=$(GIT_TAG
 GO_FLAGS := -ldflags "-extldflags \"-static\" -s -w $(GO_LDFLAGS)" -a -installsuffix cgo
 # See: https://golang.org/doc/gdb#Introduction
 DEBUG_GO_FLAGS := -race -gcflags "all=-N -l" -ldflags "-extldflags \"-static\" $(GO_LDFLAGS)"
+# go build with -race flag must enable cgo.
+CGO_ENABLED := 0
 
+DEBUG ?= false
+ifeq ($(DEBUG), true)
+	IMAGE_TAG := debug
+	GO_FLAGS := $(DEBUG_GO_FLAGS)
+	CGO_ENABLED := 1
+endif
 ifeq ($(OCI_PLATFORM), linux/arm64)
-	# Fro production build.
-	IMAGE := $(IMAGE)-arm64
+	IMAGE_TAG := $(IMAGE_TAG)-arm64
 else ifeq ($(OCI_PLATFORM), linux/amd64)
-	# For debug build.
-	IMAGE := $(IMAGE)-amd64
-	GO_FLAGS := DEBUG_GO_FLAGS
+	IMAGE_TAG := $(IMAGE_TAG)-amd64
 endif
 
 .PHONY: run
@@ -40,10 +46,10 @@ run:
 	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug $(SERVICE) -c config/config.dev.toml
 
 sphinx:
-	@CGO_ENABLED=0 GOOS=linux go build $(GO_FLAGS) -o $@ ./cmd
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux go build $(GO_FLAGS) -o $@ ./cmd
 
 sphinx-hookstream:
-	@CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build $(GO_FLAGS) -o $@ ./cmd
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux GOARCH=arm64 go build $(GO_FLAGS) -o $@ ./cmd
 
 .PHONY: lint
 lint:
@@ -55,10 +61,11 @@ binfmt:
 
 .PHONY: image
 image:
-	@docker buildx build \
+	docker buildx build \
+	--build-arg DEBUG=$(DEBUG) \
 	--platform $(OCI_PLATFORM) \
 	--ssh $(PRIVATE_KEY_PATH) \
-	-t $(IMAGE) \
+	-t $(IMAGE):$(IMAGE_TAG) \
 	-f docker/Dockerfile \
 	.
 
