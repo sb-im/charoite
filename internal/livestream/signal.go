@@ -17,6 +17,8 @@ func (p *publisher) sendOffer(sdp *webrtc.SessionDescription) error {
 	// Use a unique topic for each track source, so we can retain message.
 	// But if we use the same topic, only one track source client can retain message in the same topic
 	// the other message is replace by the new.
+	// NOTE: Currently don't enable retained message, because it always sends retained message to newly
+	// restarted cloud service which is too bad.
 	topic := p.config.OfferTopicPrefix + "/" + p.meta.Id + "/" + strconv.Itoa(int(p.meta.TrackSource))
 	t := p.client.Publish(topic, byte(p.config.Qos), p.config.Retained, payload)
 	// Handle the token in a go routine so this loop keeps sending messages regardless of delivery status
