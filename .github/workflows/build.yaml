@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "**"
+      - "master"
     tags:
       - "v*"
 jobs:
@@ -19,8 +19,6 @@ jobs:
         with:
           images: ghcr.io/sb-im/sphinx
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha
