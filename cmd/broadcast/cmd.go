@@ -20,8 +20,7 @@ const configFlagName = "config"
 
 // Command returns a broadcast command.
 func Command() *cli.Command {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := context.Background()
 
 	var (
 		logger zerolog.Logger
