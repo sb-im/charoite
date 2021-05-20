@@ -24,7 +24,7 @@ type WebRTCConfigOptions struct {
 }
 
 type MQTTClientConfigOptions struct {
-	OfferTopic               string
+	OfferTopicPrefix         string
 	AnswerTopicPrefix        string
 	CandidateSendTopicPrefix string // Opposite to edge's CandidateRecvTopicPrefix topic
 	CandidateRecvTopicPrefix string // Opposite to edge's CandidateSendTopicPrefix topic.

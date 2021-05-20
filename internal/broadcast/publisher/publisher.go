@@ -45,18 +45,22 @@ func New(
 
 // Signal performs webRTC signaling for all publisher peers.
 func (p *Publisher) Signal() {
-	// The receiving topic is the same for each edge device, but message payload is different.
+	// The receiving topic is different for each edge device only in "id/track_source" pattern suffix,
+	// therefore each edge client can retain its own message with its unique topic when broadcast service disconnected
+	// unexpectedly, but message payload is different.
+	// NOTE: currently, retained messsage is disabled for both cloud and edge clients due to its wired behavior.
 	// The id and trackSource in payload determine the following publishing topic.
 	// Receive remote SDP with MQTT.
-	t := p.client.Subscribe(p.config.OfferTopic, byte(p.config.Qos), p.handleMessage())
+	topic := p.config.OfferTopicPrefix + "/" + "+" + "/" + "+"
+	t := p.client.Subscribe(topic, byte(p.config.Qos), p.handleMessage())
 	// the connection handler is called in a goroutine so blocking here would hot cause an issue. However as blocking
 	// in other handlers does cause problems its best to just assume we should not block
 	go func() {
 		<-t.Done()
 		if t.Error() != nil {
-			p.logger.Err(t.Error()).Msgf("could not subscribe to %s", p.config.OfferTopic)
+			p.logger.Err(t.Error()).Msgf("could not subscribe to %s", topic)
 		} else {
-			p.logger.Info().Msgf("subscribed to %s", p.config.OfferTopic)
+			p.logger.Info().Msgf("subscribed to %s", topic)
 		}
 	}()
 }
@@ -124,7 +128,7 @@ func (p *Publisher) handleMessage() mqtt.MessageHandler {
 		}
 
 		logger := p.logger.With().
-			Str("offer_topic", p.config.OfferTopic).
+			Str("offer_topic_prefix", p.config.OfferTopicPrefix).
 			Str("id", offer.Meta.Id).
 			Int32("track_source", int32(offer.Meta.TrackSource)).
 			Logger()
