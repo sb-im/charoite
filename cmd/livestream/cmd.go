@@ -19,8 +19,7 @@ const configFlagName = "config"
 
 // Command returns a livestream command.
 func Command() *cli.Command {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := context.Background()
 
 	var (
 		logger zerolog.Logger
