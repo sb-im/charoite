@@ -7,12 +7,12 @@ services:
       - --debug
       - livestream
       - -c
-      - /config/config.toml
+      - /etc/skywalker/config.toml
     ports:
       - "5004:5004/udp"
       - "5005:5005/udp"
     volumes:
-      - ../../sphinx/config/config.docker.toml:/config/config.toml:ro
+      - ../../sphinx/config/config.docker.toml:/etc/skywalker/config.toml:ro
       - /etc/machine-id:/etc/machine-id:ro
     depends_on:
       - mosquitto
@@ -34,11 +34,11 @@ services:
       - --debug
       - broadcast
       - -c
-      - /config/config.toml
+      - /etc/skywalker/config.toml
     ports:
       - "8080:8080"
     volumes:
-      - ../config/config.docker.toml:/config/config.toml:ro
+      - ../config/config.docker.toml:/etc/skywalker/config.toml:ro
     depends_on:
       - mosquitto
       - turn
@@ -53,10 +53,10 @@ services:
       - --debug
       - turn
       - -c
-      - /config/config.toml
+      - /etc/skywalker/config.toml
     network_mode: host
     volumes:
-      - ../config/config.docker.toml:/config/config.toml:ro
+      - ../config/config.docker.toml:/etc/skywalker/config.toml:ro
     depends_on:
       - loki
     restart: always
