@@ -79,6 +79,14 @@ run-mosquitto:
 stop-mosquitto:
 	@docker stop mosquitto
 
+.PHONY: run-turn
+run-turn:
+	@docker run -it --rm --name turn --network host -v $$PWD/config/config.docker.toml:/etc/skywalker/config.toml:ro ghcr.io/sb-im/skywalker:debug --debug turn -c /etc/skywalker/config.toml
+
+.PHONY: stop-turn
+stop-turn:
+	@docker stop turn
+
 .PHONY: e2e-broadcast
 e2e-broadcast:
 	@go run ./e2e/broadcast
