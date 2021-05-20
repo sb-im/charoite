@@ -1,3 +1,6 @@
 .github
 .idea
 config
+docker
+README.md
+.golangci.yml

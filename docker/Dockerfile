@@ -1,13 +1,12 @@
-FROM golang:1.16-alpine
+FROM golang:1.16-alpine AS builder
 
 # See: https://docs.github.com/en/packages/guides/connecting-a-repository-to-a-container-image#connecting-a-repository-to-a-container-image-on-the-command-line
 LABEL org.opencontainers.image.source=https://github.com/SB-IM/skywalker
 
 RUN apk update && apk add --no-cache \
+    build-base \
     git \
-    openssh-client \
-    ca-certificates \
-    && update-ca-certificates
+    openssh-client
 
 WORKDIR /src
 
@@ -23,17 +22,26 @@ RUN --mount=type=ssh,id=github git config --global url."git@github.com:".instead
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -tags timetzdata -ldflags="-w -s" -a -installsuffix cgo -o skywalker ./cmd
+ARG DEBUG=false
 
-FROM scratch
+RUN DEBUG=${DEBUG} make skywalker
 
-COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=0 /src/skywalker /
+FROM alpine AS bin
 
-ENV DEBUG_MQTT_CLIENT=false
+RUN apk add --no-cache ca-certificates
 
-VOLUME [ "/config" ]
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /src/skywalker /usr/bin/skywalker
+
+RUN addgroup -g 10001 -S skywalker && \
+    adduser -u 10001 -S skywalker -G skywalker
+
+USER skywalker
 
 EXPOSE 8080
 
-ENTRYPOINT [ "/skywalker" ]
+ENV DEBUG_MQTT_CLIENT=false
+
+VOLUME [ "/etc/skywalker" ]
+
+ENTRYPOINT [ "/usr/bin/skywalker" ]
