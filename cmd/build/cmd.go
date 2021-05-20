@@ -17,7 +17,7 @@ var (
 func Command() *cli.Command {
 	return &cli.Command{
 		Name:  "info",
-		Usage: "info displays build infomation of this binary",
+		Usage: "info displays build information of this binary",
 		Action: func(c *cli.Context) error {
 			fmt.Printf(`Branch:		%s
 Version:	%s
