@@ -2,8 +2,6 @@ name: Build container image
 on:
   workflow_dispatch:
   push:
-    branches:
-      - "**"
     tags:
       - "v*"
 jobs:
@@ -19,8 +17,6 @@ jobs:
         with:
           images: ghcr.io/sb-im/skywalker
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha
