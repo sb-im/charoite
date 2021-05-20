@@ -1,3 +1,7 @@
 .github
+.idea
 config
-Makefile
+docker
+docs
+README.md
+.golangci.yml

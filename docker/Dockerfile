@@ -1,13 +1,12 @@
-FROM golang:1.16-alpine
+FROM golang:1.16-alpine AS builder
 
 # See: https://docs.github.com/en/packages/guides/connecting-a-repository-to-a-container-image#connecting-a-repository-to-a-container-image-on-the-command-line
 LABEL org.opencontainers.image.source=https://github.com/SB-IM/sphinx
 
 RUN apk update && apk add --no-cache \
+    build-base \
     git \
-    openssh-client \
-    ca-certificates \
-    && update-ca-certificates
+    openssh-client
 
 WORKDIR /src
 
@@ -23,15 +22,24 @@ RUN --mount=type=ssh,id=github git config --global url."git@github.com:".instead
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -tags timetzdata -ldflags="-w -s" -a -installsuffix cgo -o sphinx ./cmd
+RUN make sphinx
 
-FROM scratch
+FROM alpine AS bin
 
-COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=0 /src/sphinx /
+RUN apk add --no-cache ca-certificates
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /src/sphinx /usr/bin/sphinx
+
+RUN addgroup -g 10001 -S sphinx && \
+    adduser -u 10001 -S sphinx -G sphinx
+
+USER sphinx
+
+EXPOSE 5004/udp 5005/udp
 
 ENV DEBUG_MQTT_CLIENT=false
 
-VOLUME [ "/config" ]
+VOLUME [ "/etc/sphinx" ]
 
-ENTRYPOINT [ "/sphinx" ]
+ENTRYPOINT [ "/usr/bin/sphinx" ]

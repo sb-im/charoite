@@ -10,4 +10,4 @@ config/config.docker.toml
 log
 
 # Binary file
-sphinx
+sphinx*
