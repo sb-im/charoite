@@ -196,8 +196,8 @@ func mqttClientFlags(options *livestream.MQTTClientConfigOptions) []cli.Flag {
 		altsrc.NewBoolFlag(&cli.BoolFlag{
 			Name:        "mqtt_client.retained",
 			Usage:       "MQTT client setting retainsion for WebRTC SDP signaling",
-			Value:       false,
-			DefaultText: "false",
+			Value:       true,
+			DefaultText: "true",
 			Destination: &options.Retained,
 		}),
 	}
