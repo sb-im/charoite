@@ -9,6 +9,7 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/SB-IM/skywalker/cmd/broadcast"
+	"github.com/SB-IM/skywalker/cmd/build"
 	"github.com/SB-IM/skywalker/cmd/turn"
 )
 
@@ -36,6 +37,7 @@ func run(args []string) error {
 			},
 		},
 		Commands: []*cli.Command{
+			build.Command(),
 			broadcast.Command(),
 			turn.Command(),
 		},
