@@ -55,7 +55,7 @@ sphinx-hookstream:
 lint:
 	@golangci-lint run ./...
 
-# binfmt is the prequisite for docker cross platform build.
+# binfmt is the requisite for docker cross platform build.
 binfmt:
 	@docker run --privileged --rm tonistiigi/binfmt --install all
 
