@@ -69,13 +69,9 @@ image:
 	-f docker/Dockerfile \
 	.
 
-.PHONY: push
-push:
-	@docker push $(IMAGE)-arm64
-
 # Note: '--env-file' value is relative to '-f' value's directory.
 .PHONY: up
-up: down image
+up: down
 	@docker-compose -f $(DOCKER_COMPOSE_FILE) up -d
 
 .PHONY: down
@@ -84,7 +80,7 @@ down:
 
 .PHONY: logs
 logs:
-	@docker-compose -f $(DOCKER_COMPOSE_FILE) logs -f $(SERVICE)
+	@docker-compose -f $(DOCKER_COMPOSE_FILE) logs --no-log-prefix -f $(SERVICE)
 
 .PHONY: run-mosquitto
 run-mosquitto:
