@@ -1,6 +1,7 @@
 package livestream
 
 import (
+	"context"
 	"fmt"
 	"net"
 
@@ -9,7 +10,7 @@ import (
 )
 
 // rtpListener starts a UDP listener and consumes data stream.
-func rtpListener(address string, videoTrack webrtc.TrackLocal, logger *zerolog.Logger) error {
+func rtpListener(ctx context.Context, address string, videoTrack webrtc.TrackLocal, logger *zerolog.Logger) error {
 	videoTrackSample := videoTrack.(*webrtc.TrackLocalStaticRTP)
 
 	udpAddr, err := net.ResolveUDPAddr("udp", address)
@@ -33,6 +34,13 @@ func rtpListener(address string, videoTrack webrtc.TrackLocal, logger *zerolog.L
 
 		if _, err = videoTrackSample.Write(inboundRTPPacket[:n]); err != nil {
 			return fmt.Errorf("could not write videoTrackSample: %w", err)
+		}
+
+		select {
+		case <-ctx.Done():
+			logger.Info().Str("err", ctx.Err().Error()).Msg("context is done, exiting live streaming")
+			return nil
+		default:
 		}
 	}
 }

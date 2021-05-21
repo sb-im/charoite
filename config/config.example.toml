@@ -13,7 +13,6 @@ topic_candidate_send_prefix = "/edge/livestream/signal/candidate/send"
 # topic_candidate_recv_prefix is opposite to cloud's topic_candidate_send_prefix topic
 topic_candidate_recv_prefix = "/edge/livestream/signal/candidate/recv"
 
-# This topic is only for hookstream command.
 topic_hook_stream_prefix = "/edge/livestream/hook"
 
 qos = 2

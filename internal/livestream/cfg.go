@@ -27,6 +27,7 @@ type MQTTClientConfigOptions struct {
 	AnswerTopicPrefix        string
 	CandidateSendTopicPrefix string // Opposite to cloud's CandidateRecvTopicPrefix topic
 	CandidateRecvTopicPrefix string // Opposite to cloud's CandidateSendTopicPrefix topic.
+	HookStreamTopicPrefix    string
 	Qos                      uint
 	Retained                 bool
 }

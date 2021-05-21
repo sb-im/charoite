@@ -1,6 +1,7 @@
 package livestream
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"time"
@@ -15,7 +16,7 @@ import (
 
 // consumeRTSP connects to an RTSP URL and pulls media.
 // Convert H264 to Annex-B, then write to videoTrack which sends to all PeerConnections.
-func consumeRTSP(address string, videoTrack webrtc.TrackLocal, logger *zerolog.Logger) error {
+func consumeRTSP(ctx context.Context, address string, videoTrack webrtc.TrackLocal, logger *zerolog.Logger) error {
 	videoTrackSample := videoTrack.(*webrtc.TrackLocalStaticSample)
 
 	annexbNALUStartCode := func() []byte { return []byte{0x00, 0x00, 0x00, 0x01} }
@@ -69,6 +70,13 @@ func consumeRTSP(address string, videoTrack webrtc.TrackLocal, logger *zerolog.L
 
 			if err = videoTrackSample.WriteSample(media.Sample{Data: pkt.Data, Duration: bufferDuration}); err != nil && err != io.ErrClosedPipe {
 				return fmt.Errorf("could not write videoTrackSample: %w", err)
+			}
+
+			select {
+			case <-ctx.Done():
+				logger.Info().Str("err", ctx.Err().Error()).Msg("context is done, exiting live streaming")
+				return nil
+			default:
 			}
 		}
 	}

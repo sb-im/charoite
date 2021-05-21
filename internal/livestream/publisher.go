@@ -1,9 +1,11 @@
 package livestream
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -35,7 +37,8 @@ type publisher struct {
 	streamSource func() string
 
 	// liveStream blocks indefinitely if there no error.
-	liveStream func(address string, videoTrack webrtc.TrackLocal, logger *zerolog.Logger) error
+	// It should listens to ctx.Done, and exit when done.
+	liveStream func(ctx context.Context, address string, videoTrack webrtc.TrackLocal, logger *zerolog.Logger) error
 
 	pendingCandidates []*webrtc.ICECandidate
 	candidatesMux     sync.Mutex
@@ -61,8 +64,8 @@ func (p *publisher) Publish() error {
 	}
 	p.logger.Info().Msg("created PeerConnection")
 
-	if err := p.liveStream(p.streamSource(), videoTrack, &p.logger); err != nil {
-		return fmt.Errorf("live stream failed: %w", err)
+	if err := <-p.listenSubscriber(videoTrack); err != nil {
+		return fmt.Errorf("listening subscriber failed: %w", err)
 	}
 	p.logger.Info().Msg("live stream is over")
 
@@ -275,4 +278,72 @@ func videoTrackSample() (webrtc.TrackLocal, error) {
 // emptyPendingCandidate is called after all ICE candidates were sent to release resources.
 func (p *publisher) emptyPendingCandidate() {
 	p.pendingCandidates = p.pendingCandidates[:0]
+}
+
+// listenSubscriber listens to subscribers' ice connection stats.
+// When there are at least one streaming subscribers, live stream never stops,
+// when there is not even one subscriber, live stream stops.
+func (p *publisher) listenSubscriber(videoTrack webrtc.TrackLocal) <-chan error {
+	// Ctx should be renewed on every canceling.
+	ctx, cancel := context.WithCancel(context.Background())
+	// errChan should never be closed when all subscribers disconnected,
+	// It means always listens to subscribers' stat, only sends real error to errChan.
+	errChan := make(chan error, 1)
+
+	// subscriberCounter's initial value is 0.
+	var subscriberCounter uint32
+
+	topic := p.config.HookStreamTopicPrefix + "/" + p.meta.Id + "/" + strconv.Itoa(int(p.meta.TrackSource))
+	p.client.Subscribe(topic, byte(p.config.Qos), func(_ mqtt.Client, m mqtt.Message) {
+		defer func() {
+			p.logger.Info().Uint32("subscriber_counter",
+				subscriberCounter).Msg("processed subscriber state")
+		}()
+		payload, err := strconv.Atoi(string(m.Payload()))
+		if err != nil {
+			p.logger.Err(err).Msg("could not parse message payload")
+			return
+		}
+
+		state := webrtc.ICEConnectionState(payload)
+		p.logger.Info().Str("state", state.String()).Uint32("subscriber_counter",
+			subscriberCounter).Msg("received subscriber state")
+
+		switch state {
+		case webrtc.ICEConnectionStateConnected:
+			defer func() {
+				// always increment subscriberCounter by one when new subscribers connected at last.
+				atomic.AddUint32(&subscriberCounter, 1)
+			}()
+
+			if subscriberCounter > 0 {
+				// If there are already subscribers living stream, don't start the already started stream.
+				return
+			}
+			// There is no subscriber yet, start streaming for this new subscriber now.
+			go func() {
+				if err := p.liveStream(ctx, p.streamSource(), videoTrack, &p.logger); err != nil {
+					p.logger.Err(err).Msg("live stream failed")
+					errChan <- fmt.Errorf("live stream failed: %w", err)
+					return
+				}
+			}()
+			p.logger.Info().Msg("started living stream")
+		case webrtc.ICEConnectionStateDisconnected:
+			// always decrement subscriberCounter by one when new subscribers disconnected at beginning.
+			atomic.AddUint32(&subscriberCounter, ^uint32(0))
+			if subscriberCounter > 0 {
+				// If there are already subscribers living stream, just keep streaming.
+				return
+			}
+			// The last subscriber is disconnected, now stop living stream.
+			p.logger.Info().Uint32("subscriber_counter", subscriberCounter).Msg("the last subscriber is disconnected, " +
+				"cancel streaming now")
+			cancel()
+			// Renew context.
+			ctx, cancel = context.WithCancel(context.Background())
+			p.logger.Info().Msg("stream canceled")
+		}
+	})
+	return errChan
 }
