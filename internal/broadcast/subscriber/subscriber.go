@@ -221,21 +221,18 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 	}
 }
 
-// hookStream only sends signal to drone track source.
+// hookStream only signal to drone and deport track source.
 func (s *Subscriber) hookStream(meta *pb.Meta) webrtcx.HookStreamFunc {
-	if meta.TrackSource != pb.TrackSource_DRONE {
-		return webrtcx.NoopHookStreamFunc
-	}
-	return func() {
+	return func(iceConnectionStat webrtc.ICEConnectionState) {
 		topic := s.config.HookStreamTopicPrefix + "/" + meta.Id + "/" + strconv.Itoa(int(meta.TrackSource))
-		t := s.client.Publish(topic, byte(s.config.Qos), s.config.Retained, []byte(""))
+		t := s.client.Publish(topic, byte(s.config.Qos), s.config.Retained, strconv.Itoa(int(iceConnectionStat)))
 		// Handle the token in a go routine so this loop keeps sending messages regardless of delivery status
 		go func() {
 			<-t.Done()
 			if t.Error() != nil {
 				s.logger.Err(t.Error()).Msgf("could not publish to %s", topic)
 			} else {
-				s.logger.Info().Str("topic", topic).Msg("Sent hook signal")
+				s.logger.Info().Str("topic", topic).Str("stat", iceConnectionStat.String()).Msg("Sent hook signal")
 			}
 		}()
 	}

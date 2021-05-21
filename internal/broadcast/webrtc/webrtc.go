@@ -26,7 +26,7 @@ type RecvCandidateFunc func() <-chan string
 type RegisterSessionFunc func()
 
 // HookStreamFunc hooks the stream seeding source on peer connection established.
-type HookStreamFunc func()
+type HookStreamFunc func(iceConnectionStat webrtc.ICEConnectionState)
 
 const (
 	rtcpPLIInterval = time.Second * 3
@@ -172,10 +172,13 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 			}
 			w.logger.Info().Msg("peer connection has been closed")
 		case webrtc.ICEConnectionStateConnected:
-			// Hook video seeding source here.
-			w.hookStream()
 			// Register session after ICE state is connected.
 			w.registerSession()
+			// Hook video seeding source here.
+			w.hookStream(webrtc.ICEConnectionStateConnected)
+		case webrtc.ICEConnectionStateDisconnected:
+			// Hook video seeding source here.
+			w.hookStream(webrtc.ICEConnectionStateDisconnected)
 		default:
 		}
 	})
@@ -306,4 +309,4 @@ func NoopRecvCandidateFunc() <-chan string {
 func NoopRegisterSessionFunc() {}
 
 // NoopHookStreamFunc does nothing.
-func NoopHookStreamFunc() {}
+func NoopHookStreamFunc(_ webrtc.ICEConnectionState) {}
