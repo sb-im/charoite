@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/SB-IM/logging v0.2.2
-	github.com/SB-IM/mqtt-client v0.1.3
+	github.com/SB-IM/mqtt-client v0.1.4
 	github.com/SB-IM/pb v0.3.1
 	github.com/deepch/vdk v0.0.0-20210508200759-5adbbcc01f89
 	github.com/eclipse/paho.mqtt.golang v1.3.4
