@@ -23,6 +23,8 @@ const (
 
 	// burstRetriesGroupInterval is the interval between burst retries group.
 	burstRetriesGroupInterval = 1 * time.Minute
+
+	signalTimeout = 3 * time.Second
 )
 
 // publisher implements Livestream interface.
@@ -141,20 +143,29 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 	}
 	p.logger.Info().Msg("sent local description offer")
 
-	// TODO: Timeout channel receiving to avoid blocking.
-	answer := <-answerChan
-	if answer == nil {
+	// Receiving answer.
+	timer := time.NewTimer(signalTimeout)
+	defer timer.Stop()
+	select {
+	case answer := <-answerChan:
+		if err := peerConnection.SetRemoteDescription(*answer); err != nil {
+			p.logger.Err(err).Msg("could not set remote description")
+		}
+		p.logger.Info().Msg("received remote answer from cloud")
+	case <-timer.C:
+		p.logger.Info().Dur("timeout", signalTimeout).Msg("timed out receiving answer, retry creating peer connection")
+		// TODO: limit global retry times.
+		if err := p.createPeerConnection(videoTrack); err != nil {
+			p.logger.Err(err).Msg("failed to retry to create peer connection after receiving answer timed out")
+			return fmt.Errorf("failed to retry to create peer connection after receiving answer timed out: %w", err)
+		}
+		// If receiving answer fails, this workflow returns at here.
 		return nil
 	}
-	if err := peerConnection.SetRemoteDescription(*answer); err != nil {
-		return fmt.Errorf("could not set remote description: %w", err)
-	}
-	p.logger.Info().Msg("received remote answer from cloud")
 
 	// Signal candidate after setting remote description.
 	go p.signalCandidate(peerConnection, candidateChan)
 
-	// Signal candidate
 	p.candidatesMux.Lock()
 	defer func() {
 		p.emptyPendingCandidate()
@@ -191,7 +202,7 @@ func (p *publisher) handleICEConnectionStateChange(peerConnection *webrtc.PeerCo
 			// currying call function.
 			p.logger.Info().Uint32("retry_no", n+1).Msg("retry creating peer connection")
 			if err := p.createPeerConnection(videoTrack); err != nil {
-				p.logger.Err(err).Msg("failed to create peer connection")
+				p.logger.Err(err).Msg("failed to create peer connection after ice connection failure")
 			}
 			atomic.AddUint32(&p.burstRetriesNo, 1)
 		}
@@ -210,15 +221,19 @@ func (p *publisher) handleICEConnectionStateChange(peerConnection *webrtc.PeerCo
 }
 
 func (p *publisher) signalCandidate(peerConnection *webrtc.PeerConnection, ch <-chan string) {
-	// TODO: Stop adding ICE candidate when after signaling succeeded, that is, to exit the loop.
-	// Just set a timer is not enough.
-	for c := range ch {
+	timer := time.NewTimer(signalTimeout)
+	defer timer.Stop()
+
+	select {
+	case c := <-ch:
 		if err := peerConnection.AddICECandidate(webrtc.ICECandidateInit{
 			Candidate: c,
 		}); err != nil {
 			p.logger.Err(err).Msg("could not add ICE candidate")
 		}
 		p.logger.Info().Str("candidate", c).Msg("successfully added an ICE candidate")
+	case <-timer.C:
+		p.logger.Debug().Dur("timeout", signalTimeout).Msg("timed out receiving candidate")
 	}
 }
 

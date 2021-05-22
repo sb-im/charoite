@@ -26,6 +26,8 @@ func (p *publisher) sendOffer(sdp *webrtc.SessionDescription) error {
 		<-t.Done()
 		if t.Error() != nil {
 			p.logger.Err(t.Error()).Msgf("could not publish to %s", topic)
+		} else {
+			p.logger.Info().Msgf("published to %s", topic)
 		}
 	}()
 	return nil
@@ -79,6 +81,8 @@ func (p *publisher) sendCandidate(candidate *webrtc.ICECandidate) error {
 		<-t.Done()
 		if t.Error() != nil {
 			p.logger.Err(t.Error()).Msgf("could not publish to %s", p.config.CandidateSendTopicPrefix)
+		} else {
+			p.logger.Info().Msgf("published to %s", topic)
 		}
 	}()
 	return nil
