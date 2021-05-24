@@ -39,4 +39,4 @@ addr = "rtsp://127.0.0.1:1234"
 
 [hook_stream]
 service = "sbcameradronemulti.service"
-wait_timeout = "1s"
+wait_timeout = "3s"
