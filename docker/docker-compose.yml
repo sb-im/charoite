@@ -13,7 +13,7 @@ services:
       - "5005:5005/udp"
     volumes:
       - ../config/config.docker.toml:/etc/sphinx/config.toml:ro
-      - /etc/machine-id:/etc/machine-id:ro
+      - /home/william/.ssh/id_ed25519.pub:/home/sphinx/.ssh/id_ed25519.pub:ro
     depends_on:
       - mosquitto
     restart: always

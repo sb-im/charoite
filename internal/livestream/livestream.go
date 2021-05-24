@@ -1,24 +1,19 @@
 package livestream
 
 import (
-	"bytes"
 	"context"
-	"os"
 	"strconv"
 
 	mqttclient "github.com/SB-IM/mqtt-client"
 	pb "github.com/SB-IM/pb/signal"
+	"github.com/SB-IM/sphinx/internal/pkg/pubkey"
 	"github.com/rs/zerolog/log"
 )
 
 var id string
 
 func init() {
-	mID, err := machineID()
-	if err != nil || mID == nil {
-		panic(err)
-	}
-	id = string(bytes.TrimSuffix(mID, []byte("\n")))
+	id = pubkey.Ed25519PubKey()
 }
 
 // Livestream broadcasts live stream, it either consumes RTP stream from a RTP client,
@@ -78,8 +73,4 @@ func NewDeportPublisher(ctx context.Context, configOptions *DeportBroadcastConfi
 	}
 
 	return publisher
-}
-
-func machineID() ([]byte, error) {
-	return os.ReadFile("/etc/machine-id")
 }
