@@ -23,9 +23,9 @@ GIT_TAG := $(shell git describe --tags)
 # go build flags.
 VPREFIX := github.com/SB-IM/sphinx/cmd/build
 GO_LDFLAGS := -X $(VPREFIX).Branch=$(GIT_BRANCH) -X $(VPREFIX).Version=$(GIT_TAG) -X $(VPREFIX).Revision=$(GIT_REVISION) -X $(VPREFIX).BuildUser=$(shell whoami)@$(shell hostname) -X $(VPREFIX).BuildDate=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
-GO_FLAGS := -ldflags "-extldflags \"-static\" -s -w $(GO_LDFLAGS)" -a -installsuffix cgo
+GO_FLAGS := -trimpath -ldflags "-extldflags \"-static\" -s -w $(GO_LDFLAGS)" -a -installsuffix cgo
 # See: https://golang.org/doc/gdb#Introduction
-DEBUG_GO_FLAGS := -race -gcflags "all=-N -l" -ldflags "-extldflags \"-static\" $(GO_LDFLAGS)"
+DEBUG_GO_FLAGS := -trimpath -race -gcflags "all=-N -l" -ldflags "-extldflags \"-static\" $(GO_LDFLAGS)"
 # go build with -race flag must enable cgo.
 CGO_ENABLED := 0
 

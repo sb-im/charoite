@@ -26,6 +26,7 @@ func Command() *cli.Command {
 
 		mc mqtt.Client
 
+		uuid                      string
 		mqttConfigOptions         mqttclient.ConfigOptions
 		mqttClientConfigOptions   livestream.MQTTClientConfigOptions
 		webRTCConfigOptions       livestream.WebRTCConfigOptions
@@ -36,6 +37,7 @@ func Command() *cli.Command {
 	flags := func() (flags []cli.Flag) {
 		for _, v := range [][]cli.Flag{
 			loadConfigFlag(),
+			uuidFlag(&uuid),
 			mqttFlags(&mqttConfigOptions),
 			mqttClientFlags(&mqttClientConfigOptions),
 			webRTCFlags(&webRTCConfigOptions),
@@ -77,11 +79,13 @@ func Command() *cli.Command {
 		Action: func(c *cli.Context) error {
 			// Publish live stream.
 			dronePublisher := livestream.NewDronePublisher(ctx, &livestream.DroneBroadcastConfigOptions{
+				UUID:                    uuid,
 				MQTTClientConfigOptions: mqttClientConfigOptions,
 				WebRTCConfigOptions:     webRTCConfigOptions,
 				StreamSource:            droneStreamConfigOptions,
 			})
 			deportPublisher := livestream.NewDeportPublisher(ctx, &livestream.DeportBroadcastConfigOptions{
+				UUID:                    uuid,
 				MQTTClientConfigOptions: mqttClientConfigOptions,
 				WebRTCConfigOptions:     webRTCConfigOptions,
 				StreamSource:            deportStreamConfigOptions,
@@ -122,6 +126,18 @@ func loadConfigFlag() []cli.Flag {
 			Value:       "config/config.toml",
 			DefaultText: "config/config.toml",
 		},
+	}
+}
+
+func uuidFlag(uuid *string) []cli.Flag {
+	return []cli.Flag{
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "machine_id.uuid",
+			Usage:       "UUID v4 for this Linux machine",
+			Value:       "",
+			DefaultText: "",
+			Destination: uuid,
+		}),
 	}
 }
 

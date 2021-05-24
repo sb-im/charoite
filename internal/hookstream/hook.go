@@ -8,12 +8,12 @@ import (
 
 	mqttclient "github.com/SB-IM/mqtt-client"
 	pb "github.com/SB-IM/pb/signal"
-	"github.com/SB-IM/sphinx/internal/pkg/pubkey"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/rs/zerolog/log"
 )
 
 type ConfigOptions struct {
+	UUID string
 	HookCommandLine
 	MQTTClientConfigOptions
 }
@@ -35,7 +35,7 @@ func Exec(ctx context.Context, config ConfigOptions) (errCh chan error) {
 
 	errCh = make(chan error, 1)
 
-	topic := config.HookStreamTopicPrefix + "/" + pubkey.Ed25519PubKey() + "/" + strconv.Itoa(int(pb.TrackSource_DRONE))
+	topic := config.HookStreamTopicPrefix + "/" + config.UUID + "/" + strconv.Itoa(int(pb.TrackSource_DRONE))
 	t := client.Subscribe(topic, byte(config.Qos), func(c mqtt.Client, _ mqtt.Message) {
 		time.Sleep(config.WaitTimeout)
 		logger.Info().Dur("wait", config.WaitTimeout).Msg("wait for a while")

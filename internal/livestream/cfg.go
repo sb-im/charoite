@@ -6,12 +6,14 @@ const (
 )
 
 type DroneBroadcastConfigOptions struct {
+	UUID string
 	MQTTClientConfigOptions
 	WebRTCConfigOptions
 	StreamSource // Currently only RTP is supported
 }
 
 type DeportBroadcastConfigOptions struct {
+	UUID string
 	MQTTClientConfigOptions
 	WebRTCConfigOptions
 	StreamSource // Currently mainly RTSP, the other one is RTP

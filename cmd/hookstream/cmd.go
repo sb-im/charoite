@@ -25,6 +25,7 @@ func Command() *cli.Command {
 
 		mc mqtt.Client
 
+		uuid                    string
 		mqttConfigOptions       mqttclient.ConfigOptions
 		mqttClientConfigOptions hookstream.MQTTClientConfigOptions
 		hookStreamConfigOptions hookstream.HookCommandLine
@@ -33,6 +34,7 @@ func Command() *cli.Command {
 	flags := func() (flags []cli.Flag) {
 		for _, v := range [][]cli.Flag{
 			loadConfigFlag(),
+			uuidFlag(&uuid),
 			mqttFlags(&mqttConfigOptions),
 			mqttClientFlags(&mqttClientConfigOptions),
 			hookCommandLineFlags(&hookStreamConfigOptions),
@@ -71,6 +73,7 @@ func Command() *cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			errCh := hookstream.Exec(ctx, hookstream.ConfigOptions{
+				UUID:                    uuid,
 				HookCommandLine:         hookStreamConfigOptions,
 				MQTTClientConfigOptions: mqttClientConfigOptions,
 			})
@@ -95,6 +98,18 @@ func loadConfigFlag() []cli.Flag {
 			Value:       "config/config.toml",
 			DefaultText: "config/config.toml",
 		},
+	}
+}
+
+func uuidFlag(uuid *string) []cli.Flag {
+	return []cli.Flag{
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "machine_id.uuid",
+			Usage:       "UUID v4 for this Linux machine",
+			Value:       "",
+			DefaultText: "",
+			Destination: uuid,
+		}),
 	}
 }
 

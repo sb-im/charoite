@@ -6,15 +6,8 @@ import (
 
 	mqttclient "github.com/SB-IM/mqtt-client"
 	pb "github.com/SB-IM/pb/signal"
-	"github.com/SB-IM/sphinx/internal/pkg/pubkey"
 	"github.com/rs/zerolog/log"
 )
-
-var id string
-
-func init() {
-	id = pubkey.Ed25519PubKey()
-}
 
 // Livestream broadcasts live stream, it either consumes RTP stream from a RTP client,
 // or pulls RTSP stream from a RTSP server. The underlining transportation is WebRTC.
@@ -26,7 +19,7 @@ type Livestream interface {
 func NewDronePublisher(ctx context.Context, configOptions *DroneBroadcastConfigOptions) Livestream {
 	return &publisher{
 		meta: &pb.Meta{
-			Id:          id,
+			Id:          configOptions.UUID,
 			TrackSource: pb.TrackSource_DRONE,
 		},
 		config: broadcastConfigOptions{
@@ -47,7 +40,7 @@ func NewDeportPublisher(ctx context.Context, configOptions *DeportBroadcastConfi
 	// Default deport stream source is rtsp.
 	publisher := &publisher{
 		meta: &pb.Meta{
-			Id:          id,
+			Id:          configOptions.UUID,
 			TrackSource: pb.TrackSource_MONITOR,
 		},
 		config: broadcastConfigOptions{
