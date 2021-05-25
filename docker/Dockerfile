@@ -30,7 +30,6 @@ FROM alpine AS bin
 
 RUN apk add --no-cache ca-certificates
 
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /src/skywalker /usr/bin/skywalker
 
 RUN addgroup -g 10001 -S skywalker && \
