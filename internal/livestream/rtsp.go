@@ -33,6 +33,7 @@ func consumeRTSP(ctx context.Context, address string, videoTrack webrtc.TrackLoc
 		if err != nil {
 			return fmt.Errorf("rtsp dial error: %w", err)
 		}
+		defer session.Close()
 
 		codecs := session.CodecData
 		for i, t := range codecs {
