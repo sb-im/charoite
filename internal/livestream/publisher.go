@@ -155,12 +155,18 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 	case <-timer.C:
 		p.logger.Info().Dur("timeout", signalTimeout).Msg("timed out receiving answer, retry creating peer connection")
 		// TODO: limit global retry times.
-		if err := p.createPeerConnection(videoTrack); err != nil {
-			p.logger.Err(err).Msg("failed to retry to create peer connection after receiving answer timed out")
-			return fmt.Errorf("failed to retry to create peer connection after receiving answer timed out: %w", err)
+		for {
+			if !p.client.IsConnected() || !p.client.IsConnectionOpen() {
+				continue
+			}
+			// Wait until client connected to MQTT broker.
+			if err := p.createPeerConnection(videoTrack); err != nil {
+				p.logger.Err(err).Msg("failed to retry to create peer connection after receiving answer timed out")
+				return fmt.Errorf("failed to retry to create peer connection after receiving answer timed out: %w", err)
+			}
+			// If receiving answer fails, this workflow returns at here.
+			return nil
 		}
-		// If receiving answer fails, this workflow returns at here.
-		return nil
 	}
 
 	// Signal candidate after setting remote description.
