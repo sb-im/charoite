@@ -108,7 +108,8 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 	for {
 		var msg incomingMessage
 		if err := wsjson.Read(ctx, c, &msg); err != nil {
-			if websocket.CloseStatus(err) == websocket.StatusGoingAway {
+			if websocket.CloseStatus(err) == websocket.StatusGoingAway ||
+				websocket.CloseStatus(err) == websocket.StatusNoStatusRcvd {
 				s.logger.Info().Msg("client closed connection")
 			} else {
 				s.logger.Err(err).Msg("could not read message")
