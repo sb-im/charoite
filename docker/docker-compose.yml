@@ -24,8 +24,6 @@ services:
       driver: loki
       options:
         loki-url: "http://localhost:3100/api/prom/push"
-        loki-retries: "5"
-        loki-batch-size: "400"
 
   broadcast:
     image: ghcr.io/sb-im/skywalker:debug
@@ -37,6 +35,7 @@ services:
       - /etc/skywalker/config.toml
     ports:
       - "8080:8080"
+      - "127.0.0.1:6060:6060"
     volumes:
       - ../config/config.docker.toml:/etc/skywalker/config.toml:ro
     depends_on:
