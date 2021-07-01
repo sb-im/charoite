@@ -19,7 +19,7 @@ type broadcastConfigOptions struct {
 	MQTTClientConfigOptions
 	WebRTCConfigOptions
 
-	EnableHookStream bool
+	ConsumeStreamOnDemand bool
 }
 
 type MQTTClientConfigOptions struct {
@@ -43,7 +43,7 @@ type StreamSource struct {
 	RTSPSourceConfigOptions
 	RTPSourceConfigOptions
 
-	EnableHookStream bool
+	ConsumeStreamOnDemand bool
 }
 
 type RTPSourceConfigOptions struct {

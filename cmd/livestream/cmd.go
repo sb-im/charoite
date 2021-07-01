@@ -275,10 +275,10 @@ func droneStreamFlags(options *livestream.StreamSource) []cli.Flag {
 			Destination: &options.Port,
 		}),
 		altsrc.NewBoolFlag(&cli.BoolFlag{
-			Name:        "drone_stream.enable_hook_stream",
-			Usage:       "Enable hook stream",
-			DefaultText: "true",
-			Destination: &options.EnableHookStream,
+			Name:        "drone_stream.consume_stream_on_demand",
+			Usage:       "Consume stream on demand",
+			DefaultText: "false",
+			Destination: &options.ConsumeStreamOnDemand,
 		}),
 	}
 }
@@ -313,10 +313,10 @@ func deportStreamFlags(options *livestream.StreamSource) []cli.Flag {
 			Destination: &options.Port,
 		}),
 		altsrc.NewBoolFlag(&cli.BoolFlag{
-			Name:        "deport_stream.enable_hook_stream",
-			Usage:       "Enable hook stream",
-			DefaultText: "true",
-			Destination: &options.EnableHookStream,
+			Name:        "deport_stream.consume_stream_on_demand",
+			Usage:       "Consume stream on demand",
+			DefaultText: "false",
+			Destination: &options.ConsumeStreamOnDemand,
 		}),
 	}
 }
