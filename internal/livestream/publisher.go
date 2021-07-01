@@ -71,8 +71,18 @@ func (p *publisher) Publish() error {
 	}
 	p.logger.Info().Msg("created PeerConnection")
 
-	if err := <-p.listenSubscriber(videoTrack); err != nil {
-		return fmt.Errorf("listening subscriber failed: %w", err)
+	if p.config.EnableHookStream {
+		if err := <-p.listenSubscriber(videoTrack); err != nil {
+			return fmt.Errorf("listening subscriber failed: %w", err)
+		}
+	} else {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		if err := p.liveStream(ctx, p.streamSource(), videoTrack, &p.logger); err != nil {
+			p.logger.Err(err).Msg("live stream failed")
+			return fmt.Errorf("live stream failed: %w", err)
+		}
 	}
 	p.logger.Info().Msg("live stream is over")
 
