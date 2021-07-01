@@ -78,13 +78,13 @@ func Command() *cli.Command {
 		},
 		Action: func(c *cli.Context) error {
 			// Publish live stream.
-			dronePublisher := livestream.NewDronePublisher(ctx, &livestream.DroneBroadcastConfigOptions{
+			dronePublisher := livestream.NewDronePublisher(ctx, &livestream.PublisherConfigOptions{
 				UUID:                    uuid,
 				MQTTClientConfigOptions: mqttClientConfigOptions,
 				WebRTCConfigOptions:     webRTCConfigOptions,
 				StreamSource:            droneStreamConfigOptions,
 			})
-			deportPublisher := livestream.NewDeportPublisher(ctx, &livestream.DeportBroadcastConfigOptions{
+			deportPublisher := livestream.NewDeportPublisher(ctx, &livestream.PublisherConfigOptions{
 				UUID:                    uuid,
 				MQTTClientConfigOptions: mqttClientConfigOptions,
 				WebRTCConfigOptions:     webRTCConfigOptions,

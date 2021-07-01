@@ -16,7 +16,7 @@ type Livestream interface {
 	Meta() *pb.Meta
 }
 
-func NewDronePublisher(ctx context.Context, configOptions *DroneBroadcastConfigOptions) Livestream {
+func NewDronePublisher(ctx context.Context, configOptions *PublisherConfigOptions) Livestream {
 	return &publisher{
 		meta: &pb.Meta{
 			Id:          configOptions.UUID,
@@ -36,7 +36,7 @@ func NewDronePublisher(ctx context.Context, configOptions *DroneBroadcastConfigO
 	}
 }
 
-func NewDeportPublisher(ctx context.Context, configOptions *DeportBroadcastConfigOptions) Livestream {
+func NewDeportPublisher(ctx context.Context, configOptions *PublisherConfigOptions) Livestream {
 	// Default deport stream source is rtsp.
 	publisher := &publisher{
 		meta: &pb.Meta{
