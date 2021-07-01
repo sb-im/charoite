@@ -71,6 +71,7 @@ func (p *publisher) Publish() error {
 	}
 	p.logger.Info().Msg("created PeerConnection")
 
+	p.logger.Info().Bool("enable_hook_stream", p.config.EnableHookStream).Send()
 	if p.config.EnableHookStream {
 		if err := <-p.listenSubscriber(videoTrack); err != nil {
 			return fmt.Errorf("listening subscriber failed: %w", err)

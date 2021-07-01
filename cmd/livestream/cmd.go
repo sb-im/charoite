@@ -219,7 +219,6 @@ func mqttClientFlags(options *livestream.MQTTClientConfigOptions) []cli.Flag {
 		altsrc.NewBoolFlag(&cli.BoolFlag{
 			Name:        "mqtt_client.retained",
 			Usage:       "MQTT client setting retainsion for WebRTC SDP signaling",
-			Value:       false,
 			DefaultText: "false",
 			Destination: &options.Retained,
 		}),
@@ -278,7 +277,6 @@ func droneStreamFlags(options *livestream.StreamSource) []cli.Flag {
 		altsrc.NewBoolFlag(&cli.BoolFlag{
 			Name:        "drone_stream.enable_hook_stream",
 			Usage:       "Enable hook stream",
-			Value:       true,
 			DefaultText: "true",
 			Destination: &options.EnableHookStream,
 		}),
@@ -317,7 +315,6 @@ func deportStreamFlags(options *livestream.StreamSource) []cli.Flag {
 		altsrc.NewBoolFlag(&cli.BoolFlag{
 			Name:        "deport_stream.enable_hook_stream",
 			Usage:       "Enable hook stream",
-			Value:       true,
 			DefaultText: "true",
 			Destination: &options.EnableHookStream,
 		}),
