@@ -25,6 +25,7 @@ func NewDronePublisher(ctx context.Context, configOptions *PublisherConfigOption
 		config: broadcastConfigOptions{
 			configOptions.MQTTClientConfigOptions,
 			configOptions.WebRTCConfigOptions,
+			configOptions.EnableHookStream,
 		},
 		client:      mqttclient.FromContext(ctx),
 		createTrack: videoTrackRTP,
@@ -46,6 +47,7 @@ func NewDeportPublisher(ctx context.Context, configOptions *PublisherConfigOptio
 		config: broadcastConfigOptions{
 			configOptions.MQTTClientConfigOptions,
 			configOptions.WebRTCConfigOptions,
+			configOptions.EnableHookStream,
 		},
 		client:      mqttclient.FromContext(ctx),
 		createTrack: videoTrackSample,

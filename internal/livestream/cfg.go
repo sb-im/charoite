@@ -18,6 +18,8 @@ type PublisherConfigOptions struct {
 type broadcastConfigOptions struct {
 	MQTTClientConfigOptions
 	WebRTCConfigOptions
+
+	EnableHookStream bool
 }
 
 type MQTTClientConfigOptions struct {
@@ -40,6 +42,8 @@ type StreamSource struct {
 	Protocol string // rtp or rtsp
 	RTSPSourceConfigOptions
 	RTPSourceConfigOptions
+
+	EnableHookStream bool
 }
 
 type RTPSourceConfigOptions struct {

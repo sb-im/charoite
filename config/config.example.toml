@@ -27,11 +27,15 @@ ice_server_username = ""
 ice_server_credential = ""
 
 [drone_stream]
+enable_hook_stream = true
+
 protocol = "rtp"
 host = "0.0.0.0"
 port = 5004
 
 [deport_stream]
+enable_hook_stream = true
+
 protocol = "rtsp"
 addr = "rtsp://127.0.0.1:1234"
 
