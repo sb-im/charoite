@@ -12,7 +12,7 @@ require (
 	github.com/pion/randutil v0.1.0
 	github.com/pion/rtcp v1.2.6
 	github.com/pion/turn/v2 v2.0.5
-	github.com/pion/webrtc/v3 v3.0.30
+	github.com/pion/webrtc/v3 v3.0.32
 	github.com/rs/zerolog v1.23.0
 	github.com/urfave/cli/v2 v2.3.0
 	google.golang.org/protobuf v1.27.1
