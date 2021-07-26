@@ -9,7 +9,7 @@ require (
 	github.com/deepch/vdk v0.0.0-20210523103705-5b25bda1a000
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/pion/randutil v0.1.0
-	github.com/pion/webrtc/v3 v3.0.30
+	github.com/pion/webrtc/v3 v3.0.32
 	github.com/rs/zerolog v1.23.0
 	github.com/urfave/cli/v2 v2.3.0
 )
