@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/pion/randutil"
 	"github.com/pion/rtcp"
 	"github.com/pion/webrtc/v3"
 	"github.com/rs/zerolog"
@@ -72,8 +72,11 @@ func New(
 
 // CreateLocalTrack creates a TrackLocalStaticRTP and is only used by publisher.
 func CreateLocalTrack() (*webrtc.TrackLocalStaticRTP, error) {
-	id := uuid.New().String()
-	return webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264}, "video-"+id, "pion-"+id)
+	return webrtc.NewTrackLocalStaticRTP(
+		webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264},
+		fmt.Sprintf("video-%d", randutil.NewMathRandomGenerator().Uint32()),
+		fmt.Sprintf("broadcast-%d", randutil.NewMathRandomGenerator().Uint32()),
+	)
 }
 
 // CreatePublisher creates a webRTC publisher peer.

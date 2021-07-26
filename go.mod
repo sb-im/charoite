@@ -7,9 +7,9 @@ require (
 	github.com/SB-IM/mqtt-client v0.1.5
 	github.com/SB-IM/pb v0.3.1
 	github.com/eclipse/paho.mqtt.golang v1.3.5
-	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
 	github.com/pion/logging v0.2.2
+	github.com/pion/randutil v0.1.0
 	github.com/pion/rtcp v1.2.6
 	github.com/pion/turn/v2 v2.0.5
 	github.com/pion/webrtc/v3 v3.0.30
