@@ -3,7 +3,7 @@ module github.com/SB-IM/skywalker
 go 1.16
 
 require (
-	github.com/SB-IM/logging v0.2.3
+	github.com/SB-IM/logging v0.2.5
 	github.com/SB-IM/mqtt-client v0.1.5
 	github.com/SB-IM/pb v0.3.1
 	github.com/eclipse/paho.mqtt.golang v1.3.5

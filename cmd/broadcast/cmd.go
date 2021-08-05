@@ -62,7 +62,7 @@ func Command() *cli.Command {
 
 			// Set up logger.
 			debug := c.Bool("debug")
-			logging.SetDebugMod(debug)
+			logging.Debug(debug)
 			logger = log.With().Str("service", "skywalker").Str("command", "broadcast").Logger()
 			ctx = logger.WithContext(ctx)
 

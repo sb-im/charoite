@@ -1,7 +1,8 @@
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/SB-IM/logging v0.2.3 h1:RFPaTQcCoxy6rHC5vJqhLH5eA6eKH6QyQ21DtOo/Zec=
 github.com/SB-IM/logging v0.2.3/go.mod h1:BW58uI1i1sn7HLSqAc28lMXFMGXmHSAgqFpCxJI72i0=
+github.com/SB-IM/logging v0.2.5 h1:lKx/EHgsfpJG2SSP9VwQLwRtv5w3Nz3WtmCxKqeLILc=
+github.com/SB-IM/logging v0.2.5/go.mod h1:QE0jvtyGEF3+rZECN5BfqOif+E62BJZ5jJiVBW25III=
 github.com/SB-IM/mqtt-client v0.1.5 h1:XPHyAmTSOSCWhdjFlt42EwC3QZmioinxuhsvwn8WToA=
 github.com/SB-IM/mqtt-client v0.1.5/go.mod h1:ECYIygl1GJorX6Mlj8KyVc4diXyC0P30EerAz54tL9g=
 github.com/SB-IM/pb v0.3.1 h1:CgSdrOi8kiX15J7Wx+n/jcnyi2gu9fx7ySWt8QrQ1G4=
