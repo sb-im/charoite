@@ -275,9 +275,8 @@ func closePeerConnection(peerConnection *webrtc.PeerConnection) error {
 // Before these packets are returned they are processed by interceptors.
 // For things like NACK this needs to be called.
 func (p *publisher) processRTCP(rtpSender *webrtc.RTPSender) {
-	rtcpBuf := make([]byte, 1500)
 	for {
-		if _, _, rtcpErr := rtpSender.Read(rtcpBuf); rtcpErr != nil {
+		if _, _, rtcpErr := rtpSender.ReadRTCP(); rtcpErr != nil {
 			if errors.Is(rtcpErr, io.EOF) || errors.Is(rtcpErr, io.ErrClosedPipe) {
 				_ = rtpSender.Stop()
 			} else {
