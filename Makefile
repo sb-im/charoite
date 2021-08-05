@@ -1,7 +1,7 @@
 # SSH private key set up.
-CURRENT_USER ?= william
+CURRENT_USER ?= $(shell whoami)
 PRIVATE_KEY_FILE ?= id_ed25519
-PRIVATE_KEY_PATH ?= github=$(shell getent passwd "$(CURRENT_USER)" | cut -d: -f6)/.ssh/$(PRIVATE_KEY_FILE)
+PRIVATE_KEY_PATH ?= github=${HOME}/.ssh/$(PRIVATE_KEY_FILE)
 
 # Enable docker buildkit.
 DOCKER_BUILDKIT = 1
@@ -10,8 +10,6 @@ IMAGE ?= ghcr.io/sb-im/sphinx
 IMAGE_TAG ?= latest
 # OCI platform.
 OCI_PLATFORM ?= linux/arm64
-# Docker-compose file.
-DOCKER_COMPOSE_FILE ?= docker/docker-compose.yml
 # Docker-compose service.
 SERVICE ?=
 
@@ -66,21 +64,20 @@ image:
 	--platform $(OCI_PLATFORM) \
 	--ssh $(PRIVATE_KEY_PATH) \
 	-t $(IMAGE):$(IMAGE_TAG) \
-	-f docker/Dockerfile \
 	.
 
 # Note: '--env-file' value is relative to '-f' value's directory.
 .PHONY: up
 up: down
-	@docker-compose -f $(DOCKER_COMPOSE_FILE) up -d
+	@docker-compose -f up -d
 
 .PHONY: down
 down:
-	@docker-compose -f $(DOCKER_COMPOSE_FILE) down --remove-orphans
+	@docker-compose -f down --remove-orphans
 
 .PHONY: logs
 logs:
-	@docker-compose -f $(DOCKER_COMPOSE_FILE) logs --no-log-prefix -f $(SERVICE)
+	@docker-compose -f logs --no-log-prefix -f $(SERVICE)
 
 .PHONY: run-mosquitto
 run-mosquitto:
