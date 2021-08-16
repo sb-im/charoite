@@ -46,7 +46,6 @@ func consumeRTSP(ctx context.Context, address string, videoTrack webrtc.TrackLoc
 			logger.Info().Msg("ignoring all but the first stream")
 		}
 
-		var previousTime time.Duration
 		for {
 			pkt := <-session.OutgoingPacketQueue
 
@@ -66,10 +65,7 @@ func consumeRTSP(ctx context.Context, address string, videoTrack webrtc.TrackLoc
 				pkt.Data = append(annexbNALUStartCode(), pkt.Data...)
 			}
 
-			bufferDuration := pkt.Time - previousTime
-			previousTime = pkt.Time
-
-			if err = videoTrackSample.WriteSample(media.Sample{Data: pkt.Data, Duration: bufferDuration}); err != nil && err != io.ErrClosedPipe {
+			if err = videoTrackSample.WriteSample(media.Sample{Data: pkt.Data, Duration: pkt.Duration}); err != nil && err != io.ErrClosedPipe {
 				return fmt.Errorf("could not write videoTrackSample: %w", err)
 			}
 
