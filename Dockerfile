@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine AS builder
+FROM golang:1.17-alpine AS builder
 
 # See: https://docs.github.com/en/packages/guides/connecting-a-repository-to-a-container-image#connecting-a-repository-to-a-container-image-on-the-command-line
 LABEL org.opencontainers.image.source=https://github.com/SB-IM/sphinx
@@ -17,7 +17,7 @@ COPY go.mod .
 RUN --mount=type=ssh,id=github git config --global url."git@github.com:".insteadOf "https://github.com/"; \
     mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts; \
     go env -w GOPRIVATE="github.com/SB-IM"; \
-    go mod download; \
+    go mod download all; \
     go mod verify
 
 COPY . .
