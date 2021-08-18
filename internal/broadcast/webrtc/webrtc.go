@@ -190,8 +190,8 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 		return fmt.Errorf("could not set remote description: %w", err)
 	}
 
-	// Signal candidate after setting remote description.
-	go w.signalCandidate(peerConnection, candidateChan)
+	// Add candidate after setting remote description.
+	go w.addICECandidates(peerConnection, candidateChan)
 
 	answer, err := peerConnection.CreateAnswer(nil)
 	if err != nil {
@@ -203,7 +203,6 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 	}
 
 	// Send answer of local description.
-	// This is a universal answer for both publisher and subscriber in protobuf format.
 	w.SignalChan <- peerConnection.LocalDescription()
 
 	// Signal candidate
@@ -232,7 +231,7 @@ func (w *WebRTC) newPeerConnection() (*webrtc.PeerConnection, error) {
 	})
 }
 
-func (w *WebRTC) signalCandidate(peerConnection *webrtc.PeerConnection, ch <-chan string) {
+func (w *WebRTC) addICECandidates(peerConnection *webrtc.PeerConnection, ch <-chan string) {
 	// TODO: Stop adding ICE candidate when after signaling succeeded, that is, to exit the loop.
 	// Just set a timer is not enough.
 	for c := range ch {
