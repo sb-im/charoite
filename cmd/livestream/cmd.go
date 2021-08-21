@@ -261,6 +261,12 @@ func droneStreamFlags(options *livestream.StreamSource) []cli.Flag {
 			Destination: &options.Protocol,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:        "drone_stream.addr",
+			Usage:       "Address of RTSP server",
+			Value:       "",
+			Destination: &options.Addr,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "drone_stream.host",
 			Usage:       "Host of RTP server",
 			Value:       "0.0.0.0",

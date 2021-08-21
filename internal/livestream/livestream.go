@@ -17,7 +17,7 @@ type Livestream interface {
 }
 
 func NewDronePublisher(ctx context.Context, configOptions *PublisherConfigOptions) Livestream {
-	return &publisher{
+	publisher := &publisher{
 		meta: &pb.Meta{
 			Id:          configOptions.UUID,
 			TrackSource: pb.TrackSource_DRONE,
@@ -35,6 +35,16 @@ func NewDronePublisher(ctx context.Context, configOptions *PublisherConfigOption
 		liveStream: rtpListener,
 		logger:     *log.Ctx(ctx),
 	}
+
+	if configOptions.Protocol == protocolRTSP {
+		publisher.createTrack = videoTrackSample
+		publisher.streamSource = func() string {
+			return configOptions.Addr
+		}
+		publisher.liveStream = consumeRTSP
+	}
+
+	return publisher
 }
 
 func NewDeportPublisher(ctx context.Context, configOptions *PublisherConfigOptions) Livestream {
