@@ -47,7 +47,7 @@ jobs:
         with:
           ssh: github=ssh-key
           platforms: linux/arm64
-          file: docker/Dockerfile
+          file: Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
