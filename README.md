@@ -1,14 +1,23 @@
 # Sphinx
 
-Sphinx at the edge gateway.
+Sphinx runs at the edge gateway.
 
 ## What is Sphinx project?
 
-Sphinx is a service consists of multiple processes running at NVIDIA NANO of edge device. It bridges every edge process component and cloud service, things like WebRTC videos forwarding, MQTT messages proxy, etc.
+Sphinx is a service running on NVIDIA NANO of edge device. It ingests and publishes video stream to cloud service [skywalker](https://github.com/sb-im/skywalker).
+
+The core technology Sphinx built upon is [Pion WebRTC](https://github.com/pion/webrtc).
 
 Currently, Sphinx includes:
 
 - Livestream: Drone video and webcam monitor video forwarding through WebRTC.
+- Hookstream: WebRTC ICE state hook.
+
+### Supported ingestion protocols
+
+- RTP
+- RTSP
+- RTMP
 
 ## How to run?
 
