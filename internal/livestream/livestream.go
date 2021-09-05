@@ -36,12 +36,21 @@ func NewDronePublisher(ctx context.Context, configOptions *PublisherConfigOption
 		logger:     *log.Ctx(ctx),
 	}
 
-	if configOptions.Protocol == protocolRTSP {
+	switch configOptions.Protocol {
+	case protocolRTSP:
 		publisher.createTrack = videoTrackSample
 		publisher.streamSource = func() string {
 			return configOptions.Addr
 		}
 		publisher.liveStream = consumeRTSP
+	case protocolRTMP:
+		publisher.createTrack = videoTrackSample
+		publisher.streamSource = func() string {
+			return configOptions.Host + ":" + strconv.Itoa(configOptions.Port)
+		}
+		publisher.liveStream = consumeRTMP
+	default:
+		// Default is rtp.
 	}
 
 	return publisher

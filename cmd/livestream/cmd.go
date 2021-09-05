@@ -255,7 +255,7 @@ func droneStreamFlags(options *livestream.StreamSource) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "drone_stream.protocol",
-			Usage:       "Protocol of drone stream source",
+			Usage:       "Protocol of drone stream source, available protocols are: rtp, rtsp, rtmp",
 			Value:       "rtp",
 			DefaultText: "rtp",
 			Destination: &options.Protocol,
@@ -268,14 +268,14 @@ func droneStreamFlags(options *livestream.StreamSource) []cli.Flag {
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "drone_stream.host",
-			Usage:       "Host of RTP server",
+			Usage:       "Host of RTP or RTMP server",
 			Value:       "0.0.0.0",
 			DefaultText: "0.0.0.0",
 			Destination: &options.Host,
 		}),
 		altsrc.NewIntFlag(&cli.IntFlag{
 			Name:        "drone_stream.port",
-			Usage:       "Port of RTP server",
+			Usage:       "Port of RTP or RTMP server",
 			Value:       5004,
 			DefaultText: "5004",
 			Destination: &options.Port,
@@ -293,7 +293,7 @@ func deportStreamFlags(options *livestream.StreamSource) []cli.Flag {
 	return []cli.Flag{
 		altsrc.NewStringFlag(&cli.StringFlag{
 			Name:        "deport_stream.protocol",
-			Usage:       "Protocol of deport stream source",
+			Usage:       "Protocol of deport stream source, available protocols are: rtp, rtsp",
 			Value:       "rtsp",
 			DefaultText: "rtsp",
 			Destination: &options.Protocol,

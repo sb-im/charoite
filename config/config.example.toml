@@ -37,6 +37,10 @@ port = 5004
 # protocol = "rtsp"
 # addr = "rtsp://127.0.0.1:1234"
 
+# rtmp stream configuration for drone example
+# host = "0.0.0.0"
+# port = 1935
+
 [deport_stream]
 consume_stream_on_demand = false
 

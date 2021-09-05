@@ -3,6 +3,7 @@ package livestream
 const (
 	protocolRTP  = "rtp"
 	protocolRTSP = "rtsp"
+	protocolRTMP = "rtmp"
 )
 
 type PublisherConfigOptions struct {
@@ -39,14 +40,14 @@ type WebRTCConfigOptions struct {
 }
 
 type StreamSource struct {
-	Protocol string // rtp or rtsp
+	Protocol string // rtp or rtsp or rtmp
 	RTSPSourceConfigOptions
-	RTPSourceConfigOptions
+	RTPOrRTMPSourceConfigOptions
 
 	ConsumeStreamOnDemand bool
 }
 
-type RTPSourceConfigOptions struct {
+type RTPOrRTMPSourceConfigOptions struct {
 	Host string
 	Port int
 }
