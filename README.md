@@ -4,11 +4,12 @@ Skywalker walks above the cloud.
 
 ## What is Skywalker project?
 
-Skywalker is cloud service managing and controlling all edge devices, processing IOT data, etc. It also manages IOT users and provides friendly APIs to front-end.
+Skywalker is a simple and efficient WebRTC SFU server built upon [Pion WebRTC](https://github.com/pion/webrtc).
 
 Currently, Skywalker includes:
 
 - `Broadcast`: forwards video streams from edge devices.
+- `turn`: TURN server.
 
 ## How to run?
 
