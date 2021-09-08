@@ -139,7 +139,7 @@ func (h *handler) OnVideo(timestamp uint32, payload io.Reader) error {
 			spsLen := binary.BigEndian.Uint16(videoBuffer[offset : offset+2])
 			offset += 2
 			if videoBuffer[offset] != spsId {
-				panic("Failed to parse SPS")
+				return errors.New("failed to parse SPS")
 			}
 			h.sps = append(h.sps, annexBPrefix()...)
 			h.sps = append(h.sps, videoBuffer[offset:offset+int(spsLen)]...)
@@ -151,7 +151,7 @@ func (h *handler) OnVideo(timestamp uint32, payload io.Reader) error {
 			ppsLen := binary.BigEndian.Uint16(videoBuffer[offset : offset+2])
 			offset += 2
 			if videoBuffer[offset] != ppsId {
-				panic("Failed to parse PPS")
+				return errors.New("failed to parse PPS")
 			}
 			h.sps = append(h.sps, annexBPrefix()...)
 			h.sps = append(h.sps, videoBuffer[offset:offset+int(ppsLen)]...)
