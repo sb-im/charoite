@@ -14,7 +14,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/yutopp/go-flv v0.2.0
-	github.com/yutopp/go-rtmp v0.0.1
+	github.com/yutopp/go-rtmp v0.0.2-0.20210218160027-ece21675a185
 )
 
 require (

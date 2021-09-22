@@ -82,7 +82,7 @@ func (h *handler) OnCreateStream(timestamp uint32, _ *rtmpmsg.NetConnectionCreat
 	return nil
 }
 
-func (h *handler) OnPublish(timestamp uint32, cmd *rtmpmsg.NetStreamPublish) error {
+func (h *handler) OnPublish(ctx *rtmp.StreamContext, timestamp uint32, cmd *rtmpmsg.NetStreamPublish) error {
 	h.logger.Info().Msg("client is publishing stream")
 
 	if cmd.PublishingName == "" {
