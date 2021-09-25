@@ -122,14 +122,14 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 			return
 		}
 
-		p.candidatesMux.Lock()
-		defer p.candidatesMux.Unlock()
-
-		desc := peerConnection.RemoteDescription()
-		if desc == nil {
+		if desc := peerConnection.RemoteDescription(); desc == nil {
+			p.candidatesMux.Lock()
 			p.pendingCandidates = append(p.pendingCandidates, c)
+			p.candidatesMux.Unlock()
+
 			return
 		}
+
 		if err = p.sendCandidate(c); err != nil {
 			p.logger.Err(err).Msg("could not send candidate")
 		}
@@ -164,7 +164,7 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 		}
 		p.logger.Info().Msg("received remote answer from cloud")
 	case <-timer.C:
-		p.logger.Info().Dur("timeout", signalTimeout).Msg("timed out receiving answer, retry creating peer connection")
+		p.logger.Warn().Dur("timeout", signalTimeout).Msg("timed out receiving answer, retry creating peer connection")
 		// TODO: limit global retry times.
 		for {
 			if !p.client.IsConnected() || !p.client.IsConnectionOpen() {
