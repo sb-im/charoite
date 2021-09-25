@@ -2,6 +2,8 @@ package livestream
 
 import (
 	"context"
+	"net/http"
+	_ "net/http/pprof" // pprof
 	"time"
 
 	"github.com/SB-IM/logging"
@@ -73,6 +75,13 @@ func Command() *cli.Command {
 				return err
 			}
 			ctx = mqttclient.WithContext(ctx, mc)
+
+			// pprof server.
+			go func() {
+				if err := http.ListenAndServe(":6060", http.DefaultServeMux); err != nil {
+					log.Err(err).Send()
+				}
+			}()
 
 			return nil
 		},
