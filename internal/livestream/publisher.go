@@ -170,6 +170,13 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 			if !p.client.IsConnected() || !p.client.IsConnectionOpen() {
 				continue
 			}
+
+			// Close peer connection before creating a new one.
+			if err := closePeerConnection(peerConnection); err != nil {
+				p.logger.Panic().Err(err).Msg("closing PeerConnection")
+			}
+			p.logger.Info().Msg("PeerConnection has been closed")
+
 			// Wait until client connected to MQTT broker.
 			if err := p.createPeerConnection(videoTrack); err != nil {
 				p.logger.Err(err).Msg("failed to retry to create peer connection after receiving answer timed out")
@@ -211,7 +218,7 @@ func (p *publisher) handleICEConnectionStateChange(peerConnection *webrtc.PeerCo
 
 			n := atomic.LoadUint32(&p.burstRetriesNo)
 			if n == maxBurstRetries {
-				p.logger.Info().Dur("interval", burstRetriesGroupInterval).Msg("maximum burst retries reached, waiting for an interval time to continue next burst retries")
+				p.logger.Warn().Dur("interval", burstRetriesGroupInterval).Msg("maximum burst retries reached, waiting for an interval time to continue next burst retries")
 				<-time.NewTimer(burstRetriesGroupInterval).C
 				// Reset counter after burst retries group interval.
 				atomic.StoreUint32(&p.burstRetriesNo, 0)
