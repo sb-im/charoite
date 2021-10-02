@@ -165,6 +165,10 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 		p.logger.Info().Msg("set remote description")
 	case <-timer.C:
 		p.logger.Warn().Dur("timeout", signalTimeout).Msg("timed out receiving answer")
+
+		if err := closePeerConnection(peerConnection); err != nil {
+			p.logger.Panic().Err(err).Msg("closing PeerConnection")
+		}
 		return errors.New("timed out receiving answer")
 		// p.logger.Warn().Dur("timeout", signalTimeout).Msg("timed out receiving answer, retry creating peer connection")
 		// TODO: limit global retry times.
