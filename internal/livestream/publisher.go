@@ -155,44 +155,46 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 	p.logger.Info().Msg("sent local description offer")
 
 	// Receiving answer.
-	// timer := time.NewTimer(signalTimeout)
-	// defer timer.Stop()
-	// select {
-	// case answer := <-answerChan:
-	// 	if err := peerConnection.SetRemoteDescription(*answer); err != nil {
-	// 		p.logger.Err(err).Msg("could not set remote description")
-	// 	}
-	// 	p.logger.Info().Msg("received remote answer from cloud")
-	// case <-timer.C:
-	// 	p.logger.Warn().Dur("timeout", signalTimeout).Msg("timed out receiving answer, retry creating peer connection")
-	// 	// TODO: limit global retry times.
-	// 	for {
-	// 		if !p.client.IsConnected() || !p.client.IsConnectionOpen() {
-	// 			continue
-	// 		}
+	timer := time.NewTimer(signalTimeout)
+	defer timer.Stop()
+	select {
+	case answer := <-answerChan:
+		if err := peerConnection.SetRemoteDescription(*answer); err != nil {
+			p.logger.Err(err).Msg("could not set remote description")
+		}
+		p.logger.Info().Msg("set remote description")
+	case <-timer.C:
+		p.logger.Warn().Dur("timeout", signalTimeout).Msg("timed out receiving answer")
+		return errors.New("timed out receiving answer")
+		// p.logger.Warn().Dur("timeout", signalTimeout).Msg("timed out receiving answer, retry creating peer connection")
+		// TODO: limit global retry times.
+		// for {
+		// 	if !p.client.IsConnected() || !p.client.IsConnectionOpen() {
+		// 		continue
+		// 	}
 
-	// 		// Close peer connection before creating a new one.
-	// 		if err := closePeerConnection(peerConnection); err != nil {
-	// 			p.logger.Panic().Err(err).Msg("closing PeerConnection")
-	// 		}
-	// 		p.logger.Info().Msg("PeerConnection has been closed")
+		// 	// Close peer connection before creating a new one.
+		// 	if err := closePeerConnection(peerConnection); err != nil {
+		// 		p.logger.Panic().Err(err).Msg("closing PeerConnection")
+		// 	}
+		// 	p.logger.Info().Msg("PeerConnection has been closed")
 
-	// 		// Wait until client connected to MQTT broker.
-	// 		if err := p.createPeerConnection(videoTrack); err != nil {
-	// 			p.logger.Err(err).Msg("failed to retry to create peer connection after receiving answer timed out")
-	// 			return fmt.Errorf("failed to retry to create peer connection after receiving answer timed out: %w", err)
-	// 		}
-	// 		// If receiving answer fails, this workflow returns at here.
-	// 		return nil
-	// 	}
-	// }
-
-	answer := <-answerChan
-	if err := peerConnection.SetRemoteDescription(*answer); err != nil {
-		p.logger.Err(err).Msg("could not set remote description")
-		return fmt.Errorf("could not set remote description: %w", err)
+		// 	// Wait until client connected to MQTT broker.
+		// 	if err := p.createPeerConnection(videoTrack); err != nil {
+		// 		p.logger.Err(err).Msg("failed to retry to create peer connection after receiving answer timed out")
+		// 		return fmt.Errorf("failed to retry to create peer connection after receiving answer timed out: %w", err)
+		// 	}
+		// 	// If receiving answer fails, this workflow returns at here.
+		// 	return nil
+		// }
 	}
-	p.logger.Info().Msg("set remote description")
+
+	// answer := <-answerChan
+	// if err := peerConnection.SetRemoteDescription(*answer); err != nil {
+	// 	p.logger.Err(err).Msg("could not set remote description")
+	// 	return fmt.Errorf("could not set remote description: %w", err)
+	// }
+	// p.logger.Info().Msg("set remote description")
 
 	// Signal candidate after setting remote description.
 	go p.signalCandidate(peerConnection, candidateChan)
