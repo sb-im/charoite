@@ -250,6 +250,7 @@ func (p *publisher) handleICEConnectionStateChange(peerConnection *webrtc.PeerCo
 
 				if err := p.createPeerConnection(videoTrack); err != nil {
 					p.logger.Err(err).Msg("failed to create peer connection after retrying")
+					continue
 				}
 
 				break
