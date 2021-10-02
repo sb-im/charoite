@@ -19,10 +19,10 @@ import (
 
 const (
 	// maxBurstRetries is the maximum burst retry numbers.
-	maxBurstRetries = 10
+	// maxBurstRetries = 10
 
 	// burstRetriesGroupInterval is the interval between burst retries group.
-	burstRetriesGroupInterval = 1 * time.Minute
+	// burstRetriesGroupInterval = 1 * time.Minute
 
 	signalTimeout = 3 * time.Second
 )
@@ -48,7 +48,7 @@ type publisher struct {
 	logger zerolog.Logger
 
 	// burstRetriesNo is an one time counter, will be reset to zero after peer connection success or before next burst retry.
-	burstRetriesNo uint32
+	// burstRetriesNo uint32
 
 	// subscriberCounter is the front end subscriber counter.
 	// subscriberCounter's initial value is 0.
@@ -155,37 +155,44 @@ func (p *publisher) createPeerConnection(videoTrack webrtc.TrackLocal) error {
 	p.logger.Info().Msg("sent local description offer")
 
 	// Receiving answer.
-	timer := time.NewTimer(signalTimeout)
-	defer timer.Stop()
-	select {
-	case answer := <-answerChan:
-		if err := peerConnection.SetRemoteDescription(*answer); err != nil {
-			p.logger.Err(err).Msg("could not set remote description")
-		}
-		p.logger.Info().Msg("received remote answer from cloud")
-	case <-timer.C:
-		p.logger.Warn().Dur("timeout", signalTimeout).Msg("timed out receiving answer, retry creating peer connection")
-		// TODO: limit global retry times.
-		for {
-			if !p.client.IsConnected() || !p.client.IsConnectionOpen() {
-				continue
-			}
+	// timer := time.NewTimer(signalTimeout)
+	// defer timer.Stop()
+	// select {
+	// case answer := <-answerChan:
+	// 	if err := peerConnection.SetRemoteDescription(*answer); err != nil {
+	// 		p.logger.Err(err).Msg("could not set remote description")
+	// 	}
+	// 	p.logger.Info().Msg("received remote answer from cloud")
+	// case <-timer.C:
+	// 	p.logger.Warn().Dur("timeout", signalTimeout).Msg("timed out receiving answer, retry creating peer connection")
+	// 	// TODO: limit global retry times.
+	// 	for {
+	// 		if !p.client.IsConnected() || !p.client.IsConnectionOpen() {
+	// 			continue
+	// 		}
 
-			// Close peer connection before creating a new one.
-			if err := closePeerConnection(peerConnection); err != nil {
-				p.logger.Panic().Err(err).Msg("closing PeerConnection")
-			}
-			p.logger.Info().Msg("PeerConnection has been closed")
+	// 		// Close peer connection before creating a new one.
+	// 		if err := closePeerConnection(peerConnection); err != nil {
+	// 			p.logger.Panic().Err(err).Msg("closing PeerConnection")
+	// 		}
+	// 		p.logger.Info().Msg("PeerConnection has been closed")
 
-			// Wait until client connected to MQTT broker.
-			if err := p.createPeerConnection(videoTrack); err != nil {
-				p.logger.Err(err).Msg("failed to retry to create peer connection after receiving answer timed out")
-				return fmt.Errorf("failed to retry to create peer connection after receiving answer timed out: %w", err)
-			}
-			// If receiving answer fails, this workflow returns at here.
-			return nil
-		}
+	// 		// Wait until client connected to MQTT broker.
+	// 		if err := p.createPeerConnection(videoTrack); err != nil {
+	// 			p.logger.Err(err).Msg("failed to retry to create peer connection after receiving answer timed out")
+	// 			return fmt.Errorf("failed to retry to create peer connection after receiving answer timed out: %w", err)
+	// 		}
+	// 		// If receiving answer fails, this workflow returns at here.
+	// 		return nil
+	// 	}
+	// }
+
+	answer := <-answerChan
+	if err := peerConnection.SetRemoteDescription(*answer); err != nil {
+		p.logger.Err(err).Msg("could not set remote description")
+		return fmt.Errorf("could not set remote description: %w", err)
 	}
+	p.logger.Info().Msg("set remote description")
 
 	// Signal candidate after setting remote description.
 	go p.signalCandidate(peerConnection, candidateChan)
@@ -214,26 +221,42 @@ func (p *publisher) handleICEConnectionStateChange(peerConnection *webrtc.PeerCo
 			if err := closePeerConnection(peerConnection); err != nil {
 				p.logger.Panic().Err(err).Msg("closing PeerConnection")
 			}
-			p.logger.Info().Msg("PeerConnection has been closed")
+			// p.logger.Info().Msg("PeerConnection has been closed")
 
-			n := atomic.LoadUint32(&p.burstRetriesNo)
-			if n == maxBurstRetries {
-				p.logger.Warn().Dur("interval", burstRetriesGroupInterval).Msg("maximum burst retries reached, waiting for an interval time to continue next burst retries")
-				<-time.NewTimer(burstRetriesGroupInterval).C
-				// Reset counter after burst retries group interval.
-				atomic.StoreUint32(&p.burstRetriesNo, 0)
-			}
+			// n := atomic.LoadUint32(&p.burstRetriesNo)
+			// if n == maxBurstRetries {
+			// 	p.logger.Warn().Dur("interval", burstRetriesGroupInterval).Msg("maximum burst retries reached, waiting for an interval time to continue next burst retries")
+			// 	<-time.NewTimer(burstRetriesGroupInterval).C
+			// 	// Reset counter after burst retries group interval.
+			// 	atomic.StoreUint32(&p.burstRetriesNo, 0)
+			// }
 			// currying call function.
-			p.logger.Info().Uint32("retry_no", n+1).Msg("retry creating peer connection")
-			if err := p.createPeerConnection(videoTrack); err != nil {
-				p.logger.Err(err).Msg("failed to create peer connection after ice connection failure")
+			// p.logger.Info().Uint32("retry_no", n+1).Msg("retry creating peer connection")
+			// if err := p.createPeerConnection(videoTrack); err != nil {
+			// 	p.logger.Err(err).Msg("failed to create peer connection after ice connection failure")
+			// }
+			// atomic.AddUint32(&p.burstRetriesNo, 1)
+		}
+
+		if connectionState == webrtc.ICEConnectionStateClosed {
+			// Retry creating peer connection only when network is ok.
+			for {
+				if !p.client.IsConnected() || !p.client.IsConnectionOpen() {
+					continue
+				}
+				p.logger.Info().Msg("network is online now")
+
+				if err := p.createPeerConnection(videoTrack); err != nil {
+					p.logger.Err(err).Msg("failed to create peer connection after retrying")
+				}
+
+				break
 			}
-			atomic.AddUint32(&p.burstRetriesNo, 1)
 		}
 
 		if connectionState == webrtc.ICEConnectionStateConnected {
 			// If connection is successful, whether it's retried or not, counter should be reset to zero.
-			atomic.StoreUint32(&p.burstRetriesNo, 0)
+			// atomic.StoreUint32(&p.burstRetriesNo, 0)
 
 			if p.subscriberCounter > 0 {
 				// Reset subscriberCounter upon reconnected.
