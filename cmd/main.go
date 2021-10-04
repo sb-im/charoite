@@ -1,3 +1,5 @@
+//go:build turn || build || broadcast
+
 package main
 
 import (
@@ -7,11 +9,9 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
-
-	"github.com/SB-IM/skywalker/cmd/broadcast"
-	"github.com/SB-IM/skywalker/cmd/build"
-	"github.com/SB-IM/skywalker/cmd/turn"
 )
+
+var commands = make([]*cli.Command, 3)
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
@@ -36,11 +36,7 @@ func run(args []string) error {
 				EnvVars:     []string{"DEBUG"},
 			},
 		},
-		Commands: []*cli.Command{
-			build.Command(),
-			broadcast.Command(),
-			turn.Command(),
-		},
+		Commands: commands,
 	}
 
 	return app.Run(args)
