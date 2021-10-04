@@ -1,5 +1,3 @@
-//go:build turn || build || broadcast
-
 package main
 
 import (
