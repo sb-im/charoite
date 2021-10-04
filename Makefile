@@ -25,6 +25,9 @@ DEBUG_GO_FLAGS := -trimpath -race -gcflags "all=-N -l" -ldflags "-extldflags \"-
 # go build with -race flag must enable cgo.
 CGO_ENABLED := 0
 
+# Go build tags
+BUILD_TAGS ?= broadcast
+
 DEBUG ?= false
 ifeq ($(DEBUG), true)
 	IMAGE_TAG := debug
@@ -34,10 +37,10 @@ endif
 
 .PHONY: run
 run:
-	@DEBUG_MQTT_CLIENT=false go run -race ./cmd --debug $(SERVICE) -c config/config.dev.toml
+	@DEBUG_MQTT_CLIENT=false go run -tags $(BUILD_TAGS) -race ./cmd --debug $(SERVICE) -c config/config.dev.toml
 
 skywalker:
-	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux go build $(GO_FLAGS) -o $@ ./cmd
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=linux go build -tags $(BUILD_TAGS) $(GO_FLAGS) -o $@ ./cmd
 
 .PHONY: lint
 lint:
