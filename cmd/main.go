@@ -9,7 +9,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-var commands = make([]*cli.Command, 0, 3)
+var commands = make([]*cli.Command, 0, 1)
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
