@@ -1,7 +1,7 @@
 FROM golang:1.17-alpine AS builder
 
 # See: https://docs.github.com/en/packages/guides/connecting-a-repository-to-a-container-image#connecting-a-repository-to-a-container-image-on-the-command-line
-LABEL org.opencontainers.image.source=https://github.com/SB-IM/skywalker
+LABEL org.opencontainers.image.source=https://github.com/SB-IM/charoite
 
 RUN apk update && apk add --no-cache \
     build-base \
@@ -22,25 +22,22 @@ RUN --mount=type=ssh,id=github git config --global url."git@github.com:".instead
 
 COPY . .
 
-ARG DEBUG=false
+ARG DEBUG=true
+ARG BUILD_TAGS=broadcast
 
-RUN DEBUG=${DEBUG} make skywalker
+RUN make charoite DEBUG=${DEBUG} BUILD_TAGS=${BUILD_TAGS}
 
 FROM alpine AS bin
 
 RUN apk add --no-cache ca-certificates
 
-COPY --from=builder /src/skywalker /usr/bin/skywalker
+COPY --from=builder /src/charoite /usr/bin/charoite
 
-RUN addgroup -g 10001 -S skywalker && \
-    adduser -u 10001 -S skywalker -G skywalker
+RUN addgroup -g 10001 -S charoite && \
+    adduser -u 10001 -S charoite -G charoite
 
-USER skywalker
+USER charoite
 
-EXPOSE 8080
+VOLUME [ "/etc/charoite" ]
 
-ENV DEBUG_MQTT_CLIENT=false
-
-VOLUME [ "/etc/skywalker" ]
-
-ENTRYPOINT [ "/usr/bin/skywalker" ]
+ENTRYPOINT [ "/usr/bin/charoite" ]
