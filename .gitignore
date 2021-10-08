@@ -4,6 +4,8 @@
 
 # Development config files
 config/config.debug.toml
+config/config.cloud.toml
+config/config.edge.toml
 .env
 
 # Log file
