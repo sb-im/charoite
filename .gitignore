@@ -3,12 +3,11 @@
 .vscode
 
 # Development config files
-config/config.dev.toml
-config/config.docker.toml
+config/config.debug.toml
 .env
 
 # Log file
 log
 
 # Binary file
-sphinx*
+charoite
