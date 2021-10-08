@@ -1,5 +1,14 @@
+# Jetbrains IDE
 .idea
+.vscode
+
+# Development config files
 config/config.dev.toml
-.env
 config/config.docker.toml
-skywalker
+.env
+
+# Log file
+log
+
+# Binary file
+sphinx*
