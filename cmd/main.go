@@ -5,11 +5,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/SB-IM/charoite/cmd/internal/info"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
 
-var commands = make([]*cli.Command, 0, 1)
+var commands = make([]*cli.Command, 0, 2)
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
@@ -22,6 +23,8 @@ func main() {
 }
 
 func run(args []string) error {
+	commands = append(commands, info.Command())
+
 	app := &cli.App{
 		Name:  "skywalker",
 		Usage: "skywalker runs in cloud, currently includes broadcast sub-service",
