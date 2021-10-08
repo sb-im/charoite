@@ -1,4 +1,4 @@
-module github.com/SB-IM/skywalker
+module github.com/SB-IM/charoite
 
 go 1.17
 
@@ -6,15 +6,19 @@ require (
 	github.com/SB-IM/logging v0.2.5
 	github.com/SB-IM/mqtt-client v0.1.5
 	github.com/SB-IM/pb v0.3.1
+	github.com/deepch/vdk v0.0.0-20211004143409-06d985e42f69
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/gorilla/mux v1.8.0
 	github.com/pion/logging v0.2.2
 	github.com/pion/randutil v0.1.0
 	github.com/pion/rtcp v1.2.8
 	github.com/pion/turn/v2 v2.0.5
-	github.com/pion/webrtc/v3 v3.1.0
+	github.com/pion/webrtc/v3 v3.1.2
 	github.com/rs/zerolog v1.25.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/urfave/cli/v2 v2.3.0
+	github.com/yutopp/go-flv v0.2.0
+	github.com/yutopp/go-rtmp v0.0.2-0.20210218160027-ece21675a185
 	google.golang.org/protobuf v1.27.1
 	nhooyr.io/websocket v1.8.7
 )
@@ -24,7 +28,10 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.0 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
+	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/pion/datachannel v1.4.21 // indirect
 	github.com/pion/dtls/v2 v2.0.9 // indirect
 	github.com/pion/ice/v2 v2.1.12 // indirect
@@ -39,6 +46,7 @@ require (
 	github.com/pion/udp v0.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/yutopp/go-amf0 v0.0.0-20180803120851-48851794bb1f // indirect
 	golang.org/x/crypto v0.0.0-20210920023735-84f357641f63 // indirect
 	golang.org/x/net v0.0.0-20210917221730-978cfadd31cf // indirect
 	golang.org/x/sys v0.0.0-20210917161153-d61c044b1678 // indirect

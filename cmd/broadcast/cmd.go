@@ -14,8 +14,8 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 
-	"github.com/SB-IM/skywalker/internal/broadcast"
-	"github.com/SB-IM/skywalker/internal/broadcast/cfg"
+	"github.com/SB-IM/charoite/internal/broadcast"
+	"github.com/SB-IM/charoite/internal/broadcast/cfg"
 )
 
 const configFlagName = "config"

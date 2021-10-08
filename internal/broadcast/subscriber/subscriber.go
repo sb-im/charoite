@@ -15,9 +15,9 @@ import (
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
 
-	"github.com/SB-IM/skywalker/internal/broadcast/cfg"
-	"github.com/SB-IM/skywalker/internal/broadcast/httpx"
-	webrtcx "github.com/SB-IM/skywalker/internal/broadcast/webrtc"
+	"github.com/SB-IM/charoite/internal/broadcast/cfg"
+	"github.com/SB-IM/charoite/internal/broadcast/httpx"
+	webrtcx "github.com/SB-IM/charoite/internal/broadcast/webrtc"
 )
 
 // Subscriber stands for a subscriber webRTC peer.

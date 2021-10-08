@@ -12,7 +12,7 @@ import (
 	"github.com/pion/webrtc/v3"
 	"github.com/rs/zerolog"
 
-	"github.com/SB-IM/skywalker/internal/broadcast/cfg"
+	"github.com/SB-IM/charoite/internal/broadcast/cfg"
 )
 
 // SendCandidateFunc sends a candidate to remote webRTC peer.

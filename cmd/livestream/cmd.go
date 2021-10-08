@@ -14,7 +14,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
 
-	"github.com/SB-IM/sphinx/internal/livestream"
+	"github.com/SB-IM/charoite/internal/livestream"
 )
 
 const configFlagName = "config"

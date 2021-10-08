@@ -6,7 +6,7 @@ import (
 
 	"github.com/SB-IM/logging"
 	mqttclient "github.com/SB-IM/mqtt-client"
-	"github.com/SB-IM/sphinx/internal/hookstream"
+	"github.com/SB-IM/charoite/internal/hookstream"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"

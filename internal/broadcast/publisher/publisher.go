@@ -12,8 +12,8 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/SB-IM/skywalker/internal/broadcast/cfg"
-	webrtcx "github.com/SB-IM/skywalker/internal/broadcast/webrtc"
+	"github.com/SB-IM/charoite/internal/broadcast/cfg"
+	webrtcx "github.com/SB-IM/charoite/internal/broadcast/webrtc"
 )
 
 // Publisher stands for a publisher webRTC peer.

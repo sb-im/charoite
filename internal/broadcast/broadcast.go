@@ -12,9 +12,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/SB-IM/skywalker/internal/broadcast/cfg"
-	"github.com/SB-IM/skywalker/internal/broadcast/publisher"
-	"github.com/SB-IM/skywalker/internal/broadcast/subscriber"
+	"github.com/SB-IM/charoite/internal/broadcast/cfg"
+	"github.com/SB-IM/charoite/internal/broadcast/publisher"
+	"github.com/SB-IM/charoite/internal/broadcast/subscriber"
 )
 
 // Service consists of many sessions.
