@@ -2,7 +2,7 @@
 
 package main
 
-import "github.com/SB-IM/charoite/cmd/build"
+import "github.com/SB-IM/charoite/cmd/internal/build"
 
 func init() {
 	commands = append(commands, build.Command())
