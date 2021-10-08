@@ -22,7 +22,7 @@ RUN --mount=type=ssh,id=github git config --global url."git@github.com:".instead
 
 COPY . .
 
-ARG DEBUG=true
+ARG DEBUG=false # docker/build-push-action@v2 has a bug when inputing two args, so we have to make this default to false.
 ARG BUILD_TAGS=broadcast
 
 RUN make charoite DEBUG=${DEBUG} BUILD_TAGS=${BUILD_TAGS}
