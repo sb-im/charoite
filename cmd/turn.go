@@ -1,9 +1,9 @@
-//go:build build
+//go:build turn
 
 package main
 
-import "github.com/SB-IM/charoite/cmd/internal/build"
+import "github.com/SB-IM/charoite/cmd/internal/turn"
 
 func init() {
-	commands = append(commands, build.Command())
+	commands = append(commands, turn.Command())
 }
