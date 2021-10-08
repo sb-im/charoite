@@ -1,31 +1,19 @@
-# Skywalker
+# Charoite
 
-Skywalker walks above the cloud.
-
-## What is Skywalker project?
-
-Skywalker is a simple and efficient WebRTC SFU server built upon [Pion WebRTC](https://github.com/pion/webrtc).
-
-Currently, Skywalker includes:
-
-- `Broadcast`: forwards video streams from edge devices.
-- `turn`: TURN server.
+Charoite is a WebRTC SFU streaming solution dedicated for IOT. It's built upon [Pion WebRTC](https://github.com/pion/webrtc).
 
 ## How to run?
 
-All sub-processes are executed through sub commands under `skywalker` command.
-
-Make sure you have the following tools installed:
+It's recommended that you have the following tools installed:
 
 - `Go`
 - `GNU make`
 - `golangci-lint` (Optional)
 - `Docker`
-- `Docker-compose` (Optional)
-- `mosquitto` (Optional, can be on Docker)
+- `Docker-compose`
 
-### Run `broadcast`
+Run with docker-compose:
 
 ```bash
-$ make
+$ make up
 ```
