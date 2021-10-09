@@ -55,7 +55,7 @@ port = 5004
 
 # rtsp stream configuration for drone example.
 # protocol = "rtsp"
-# addr = "rtsp://127.0.0.1:1234"
+# addr = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov"
 
 # rtmp stream configuration for drone example.
 # protocol = "rtmp"
@@ -67,7 +67,7 @@ port = 5004
 consume_stream_on_demand = false
 
 protocol = "rtsp"
-addr = "rtsp://127.0.0.1:1234"
+addr = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov"
 
 # rtp stream configuration for deport example.
 # protocol = "rtp"
