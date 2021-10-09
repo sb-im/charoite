@@ -63,7 +63,7 @@ func Command() *cli.Command {
 			// Set up logger.
 			debug := c.Bool("debug")
 			logging.Debug(debug)
-			logger = log.With().Str("service", "skywalker").Str("command", "broadcast").Logger()
+			logger = log.With().Str("command", "broadcast").Logger()
 			ctx = logger.WithContext(ctx)
 
 			// Initializes MQTT client.

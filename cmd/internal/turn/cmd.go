@@ -46,7 +46,7 @@ func Command() *cli.Command {
 			// Set up logger.
 			debug := c.Bool("debug")
 			logging.Debug(debug)
-			logger = log.With().Str("service", "skywalker").Str("command", "turn").Logger()
+			logger = log.With().Str("command", "turn").Logger()
 			return nil
 		},
 		Action: func(c *cli.Context) error {

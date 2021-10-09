@@ -26,8 +26,8 @@ func run(args []string) error {
 	commands = append(commands, info.Command())
 
 	app := &cli.App{
-		Name:  "skywalker",
-		Usage: "skywalker runs in cloud, currently includes broadcast sub-service",
+		Name:  "Charoite",
+		Usage: "Charoite WebRTC SFU services",
 		Flags: []cli.Flag{ // Global flags.
 			&cli.BoolFlag{
 				Name:        "debug",

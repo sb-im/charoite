@@ -66,7 +66,7 @@ func Command() *cli.Command {
 			// Set up logger.
 			debug := c.Bool("debug")
 			logging.Debug(debug)
-			logger = log.With().Str("service", "sphinx").Str("command", "livestream").Logger()
+			logger = log.With().Str("command", "livestream").Logger()
 			ctx = logger.WithContext(ctx)
 
 			// Initializes MQTT client.
