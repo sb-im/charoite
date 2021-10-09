@@ -48,6 +48,9 @@ func run(args []string) error {
 			},
 		},
 		Before: func(c *cli.Context) error {
+			if !c.Bool("profile") {
+				return nil
+			}
 			go func() {
 				stdlog.Println("Starting pprof server at :6060")
 				stdlog.Fatal(http.ListenAndServe(":6060", http.DefaultServeMux))
