@@ -41,7 +41,7 @@ endif
 
 .PHONY: run
 run:
-	DEBUG_MQTT_CLIENT=false go run -tags $(BUILD_TAGS) -race ./cmd --debug $(COMMAND) -c config/config.debug.toml
+	DEBUG_MQTT_CLIENT=false go run -tags $(BUILD_TAGS) -race ./cmd --debug --profile $(COMMAND) -c config/config.debug.toml
 
 charoite:
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) go build -tags $(BUILD_TAGS) $(GO_FLAGS) -o $@ ./cmd

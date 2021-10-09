@@ -2,8 +2,6 @@ package broadcast
 
 import (
 	"context"
-	"net/http"
-	_ "net/http/pprof" // pprof for broadcast command only
 	"time"
 
 	"github.com/SB-IM/logging"
@@ -75,11 +73,6 @@ func Command() *cli.Command {
 			return nil
 		},
 		Action: func(c *cli.Context) error {
-			// Serve pprof using DefaultServeMux.
-			go func() {
-				logger.Fatal().Err(http.ListenAndServe(":6060", http.DefaultServeMux)).Msg("pprof server failed")
-			}()
-
 			svc := broadcast.New(ctx, &cfg.ConfigOptions{
 				WebRTCConfigOptions:     webRTCConfigOptions,
 				MQTTClientConfigOptions: mqttClientConfigOptions,

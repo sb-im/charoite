@@ -5,6 +5,7 @@ services:
     container_name: livestream
     command:
       - --debug
+      - --profile
       - livestream
       - -c
       - /etc/charoite/config.toml
@@ -12,6 +13,7 @@ services:
       - "5004:5004/udp"
       - "5005:5005/udp"
       - "1935:1935"
+      - "127.0.0.1:16060:6060"
     volumes:
       - ./config/config.edge.toml:/etc/charoite/config.toml:ro
     depends_on:
@@ -30,12 +32,13 @@ services:
     container_name: broadcast
     command:
       - --debug
+      - --profile
       - broadcast
       - -c
       - /etc/charoite/config.toml
     ports:
       - "8080:8080"
-      - "127.0.0.1:6060:6060"
+      - "127.0.0.1:16061:6060"
     volumes:
       - ./config/config.cloud.toml:/etc/charoite/config.toml:ro
     depends_on:

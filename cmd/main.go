@@ -1,7 +1,10 @@
 package main
 
 import (
+	stdlog "log"
 	"math/rand"
+	"net/http"
+	_ "net/http/pprof" // pprof
 	"os"
 	"time"
 
@@ -36,6 +39,20 @@ func run(args []string) error {
 				DefaultText: "false",
 				EnvVars:     []string{"DEBUG"},
 			},
+			&cli.BoolFlag{
+				Name:        "profile",
+				Value:       false,
+				Usage:       "enable profiling",
+				DefaultText: "false",
+				EnvVars:     []string{"PROFILE"},
+			},
+		},
+		Before: func(c *cli.Context) error {
+			go func() {
+				stdlog.Println("Starting pprof server at :6060")
+				stdlog.Fatal(http.ListenAndServe(":6060", http.DefaultServeMux))
+			}()
+			return nil
 		},
 		Commands: commands,
 	}
