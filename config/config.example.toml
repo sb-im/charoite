@@ -17,7 +17,7 @@ topic_answer_prefix = "/edge/livestream/signal/answer"
 topic_candidate_send_prefix = "/edge/livestream/signal/candidate/recv" # for livestream, it's value is "/edge/livestream/signal/candidate/send".
 topic_candidate_recv_prefix = "/edge/livestream/signal/candidate/send" # for livestream, it's value is "/edge/livestream/signal/candidate/recv".
 
-topic_hook_stream_prefix = "/edge/livestream/hook"
+topic_notify_stream_prefix = "/edge/livestream/notify"
 
 qos = 0 # for livestream, it's value is 2.
 retained = false

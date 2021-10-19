@@ -28,7 +28,7 @@ type MQTTClientConfigOptions struct {
 	AnswerTopicPrefix        string
 	CandidateSendTopicPrefix string // Opposite to edge's CandidateRecvTopicPrefix topic
 	CandidateRecvTopicPrefix string // Opposite to edge's CandidateSendTopicPrefix topic.
-	HookStreamTopicPrefix    string
+	NotifyStreamTopicPrefix  string
 	Qos                      uint
 	Retained                 bool
 }

@@ -203,11 +203,11 @@ func mqttClientFlags(options *livestream.MQTTClientConfigOptions) []cli.Flag {
 			Destination: &options.CandidateRecvTopicPrefix,
 		}),
 		altsrc.NewStringFlag(&cli.StringFlag{
-			Name:        "mqtt_client.topic_hook_stream_prefix",
-			Usage:       "MQTT topic prefix for hooking of seeding stream",
-			Value:       "/edge/livestream/hook",
-			DefaultText: "/edge/livestream/hook",
-			Destination: &options.HookStreamTopicPrefix,
+			Name:        "mqtt_client.topic_notify_stream_prefix",
+			Usage:       "MQTT topic prefix for stream notification",
+			Value:       "/edge/livestream/notify",
+			DefaultText: "/edge/livestream/notify",
+			Destination: &options.NotifyStreamTopicPrefix,
 		}),
 		altsrc.NewUintFlag(&cli.UintFlag{
 			Name:        "mqtt_client.qos",

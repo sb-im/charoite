@@ -181,7 +181,7 @@ func (p *Publisher) signalPeerConnection(offer *pb.SessionDescription, logger *z
 		p.sendCandidate(offer.Meta),
 		p.recvCandidate(offer.Meta),
 		p.registerSession(offer.Meta, videoTrack),
-		webrtcx.NoopHookStreamFunc,
+		webrtcx.NoopUpdateCounterFunc,
 	)
 
 	// TODO: handle blocking case with timeout for channels.

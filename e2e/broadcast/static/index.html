@@ -14,7 +14,7 @@
 </body>
 
 <script type="text/javascript">
-    const conn = new WebSocket(`ws://${location.host}/v1/broadcast/signal`)
+    const conn = new WebSocket(`ws://localhost:8080/v1/broadcast/signal`)
 
     let answered = false
     let candidates = []
@@ -54,7 +54,7 @@
             id: Date.now().toString(),
             data: {
                 meta: {
-                    id: "fa955cc6881b4b45b49ffbf2d81e7223",
+                    id: "0cbab001-b037-4b0f-a687-d22a803eb363",
                     track_source: 1,
                 },
                 candidate: JSON.stringify(e.candidate)
@@ -78,7 +78,7 @@
                     id: Date.now().toString(),
                     data: {
                         meta: {
-                            id: "fa955cc6881b4b45b49ffbf2d81e7223",
+                            id: "0cbab001-b037-4b0f-a687-d22a803eb363",
                             track_source: 1,
                         },
                         sdp: JSON.stringify(offer),

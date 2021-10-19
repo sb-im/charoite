@@ -7,7 +7,6 @@ import (
 	"io"
 	"strconv"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	pb "github.com/SB-IM/pb/signal"
@@ -40,11 +39,6 @@ type publisher struct {
 	candidatesMux     sync.Mutex
 
 	logger zerolog.Logger
-
-	// subscriberCounter is the front end subscriber counter.
-	// subscriberCounter's initial value is 0.
-	// The counter should be reset when edge disconnected and then reconnected again from mqtt broker.
-	subscriberCounter uint32
 }
 
 func (p *publisher) Publish() error {
@@ -68,10 +62,7 @@ func (p *publisher) Publish() error {
 			return fmt.Errorf("listening subscriber failed: %w", err)
 		}
 	} else {
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-
-		if err := p.liveStream(ctx, p.streamSource(), videoTrack, &p.logger); err != nil {
+		if err := p.liveStream(context.Background(), p.streamSource(), videoTrack, &p.logger); err != nil {
 			p.logger.Err(err).Msg("live stream failed")
 			return fmt.Errorf("live stream failed: %w", err)
 		}
@@ -208,14 +199,6 @@ func (p *publisher) handleICEConnectionStateChange(peerConnection *webrtc.PeerCo
 				break
 			}
 		}
-
-		if connectionState == webrtc.ICEConnectionStateConnected {
-			if p.subscriberCounter > 0 {
-				// Reset subscriberCounter upon reconnected.
-				atomic.StoreUint32(&p.subscriberCounter, 0)
-				p.logger.Info().Uint32("subscriber_counter", p.subscriberCounter).Msg("reset subscriber counter to 0 upon ice reconnected")
-			}
-		}
 	}
 }
 
@@ -302,67 +285,54 @@ func (p *publisher) emptyPendingCandidate() {
 	p.pendingCandidates = p.pendingCandidates[:0]
 }
 
-// listenSubscriber listens to subscribers' ice connection stats.
-// When there are at least one streaming subscribers, live stream never stops,
-// when there is not even one subscriber, live stream stops.
 func (p *publisher) listenSubscriber(videoTrack webrtc.TrackLocal) <-chan error {
 	// Ctx should be renewed on every canceling.
 	ctx, cancel := context.WithCancel(context.Background())
-	// errChan should never be closed when all subscribers disconnected,
-	// It means always listens to subscribers' stat, only sends real error to errChan.
 	errChan := make(chan error, 1)
+	topic := p.config.NotifyStreamTopicPrefix + "/" + p.meta.Id + "/" + strconv.Itoa(int(p.meta.TrackSource))
 
-	topic := p.config.HookStreamTopicPrefix + "/" + p.meta.Id + "/" + strconv.Itoa(int(p.meta.TrackSource))
+	// started marks whether livestream is started.
+	var started bool
+	var mux sync.Mutex
+
 	p.client.Subscribe(topic, byte(p.config.Qos), func(_ mqtt.Client, m mqtt.Message) {
-		defer func() {
-			p.logger.Info().Uint32("subscriber_counter", p.subscriberCounter).Msg("processed subscriber state")
-		}()
-		payload, err := strconv.Atoi(string(m.Payload()))
+		mux.Lock()
+		defer mux.Unlock()
+
+		counter, err := strconv.Atoi(string(m.Payload()))
 		if err != nil {
 			p.logger.Err(err).Msg("could not parse message payload")
 			return
 		}
+		p.logger.Info().Int("subscriber_counter", counter).Msg("received subscriber counter")
 
-		state := webrtc.ICEConnectionState(payload)
-		p.logger.Info().Str("state", state.String()).Uint32("subscriber_counter", p.subscriberCounter).Msg("received subscriber state")
-
-		switch state {
-		case webrtc.ICEConnectionStateConnected:
-			defer func() {
-				// always increment subscriberCounter by one when new subscribers connected at last.
-				atomic.AddUint32(&p.subscriberCounter, 1)
-			}()
-
-			if p.subscriberCounter > 0 {
-				// If there are already subscribers living stream, don't start the already started stream.
-				return
-			}
-			// There is no subscriber yet, start streaming for this new subscriber now.
-			go func() {
-				if err := p.liveStream(ctx, p.streamSource(), videoTrack, &p.logger); err != nil {
-					p.logger.Err(err).Msg("live stream failed")
-					errChan <- fmt.Errorf("live stream failed: %w", err)
-					return
-				}
-			}()
-			p.logger.Info().Msg("started living stream")
-		case webrtc.ICEConnectionStateDisconnected:
-			if p.subscriberCounter == 0 {
-				return
-			}
-			// always decrement subscriberCounter by one if it's larger than 0 when new subscribers disconnected.
-			atomic.AddUint32(&p.subscriberCounter, ^uint32(0))
-			if p.subscriberCounter > 0 {
-				// If there are already subscribers living stream, just keep streaming.
-				return
-			}
-			// The last subscriber is disconnected, now stop living stream.
-			p.logger.Info().Uint32("subscriber_counter", p.subscriberCounter).Msg("the last subscriber is disconnected, cancel streaming now")
+		if counter == 0 {
 			cancel()
-			// Renew context.
+			p.logger.Info().Msg("cancel living stream now")
+
 			ctx, cancel = context.WithCancel(context.Background())
-			p.logger.Info().Msg("stream canceled")
+			started = false
+
+			return
 		}
+
+		if started {
+			p.logger.Debug().Msg("live stream was already started")
+			return
+		}
+
+		go func() {
+			if err := p.liveStream(ctx, p.streamSource(), videoTrack, &p.logger); err != nil {
+				p.logger.Err(err).Msg("live stream failed")
+				errChan <- fmt.Errorf("live stream failed: %w", err)
+
+				return
+			}
+		}()
+		p.logger.Info().Msg("start living stream now")
+
+		started = true
 	})
+
 	return errChan
 }

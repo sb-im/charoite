@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/pion/randutil"
@@ -26,8 +25,8 @@ type RecvCandidateFunc func() <-chan string
 // For subscriber, it should use NoopRegisterSessionFunc instead.
 type RegisterSessionFunc func()
 
-// HookStreamFunc hooks the stream seeding source on peer connection established.
-type HookStreamFunc func(iceConnectionStat webrtc.ICEConnectionState)
+// UpdateCounterFunc update connections number of its belonging tracksource.
+type UpdateCounterFunc func(int)
 
 const (
 	rtcpPLIInterval = time.Second * 3
@@ -50,7 +49,8 @@ type WebRTC struct {
 
 	registerSession RegisterSessionFunc
 
-	hookStream HookStreamFunc
+	updateCounter UpdateCounterFunc
+	counterMux    sync.Mutex
 }
 
 // New returns a new WebRTC.
@@ -60,7 +60,7 @@ func New(
 	sendCandidate SendCandidateFunc,
 	recvCandidate RecvCandidateFunc,
 	registerSession RegisterSessionFunc,
-	hookStream HookStreamFunc,
+	updateCounter UpdateCounterFunc,
 ) *WebRTC {
 	return &WebRTC{
 		logger:          *logger,
@@ -69,7 +69,7 @@ func New(
 		sendCandidate:   sendCandidate,
 		recvCandidate:   recvCandidate,
 		registerSession: registerSession,
-		hookStream:      hookStream,
+		updateCounter:   updateCounter,
 	}
 }
 
@@ -169,10 +169,12 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 	// Set the handler for ICE connection state
 	// This will notify you when the peer has connected/disconnected
 	peerConnection.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
+		w.counterMux.Lock()
+		defer w.counterMux.Unlock()
+
 		w.logger.Info().Str("state", connectionState.String()).Msg("ICE connection state has changed")
 
-		var newCounter uint32
-		oldCounter := atomic.LoadUint32(&w.connectionCounter)
+		oldCounter := w.connectionCounter
 
 		switch connectionState {
 		case webrtc.ICEConnectionStateFailed:
@@ -181,21 +183,21 @@ func (w *WebRTC) signalPeerConnection(peerConnection *webrtc.PeerConnection) err
 			}
 			w.logger.Info().Msg("peer connection has been closed")
 		case webrtc.ICEConnectionStateConnected:
-			newCounter = atomic.AddUint32(&w.connectionCounter, 1)
+			w.connectionCounter++
 		case webrtc.ICEConnectionStateDisconnected:
-			newCounter = atomic.AddUint32(&w.connectionCounter, ^uint32(0))
+			w.connectionCounter--
 		default:
 		}
 
-		// Absolute corectness of connection conter.
-		if oldCounter == 1 && newCounter == 0 {
+		// Absolute corectness of connections conter.
+		if oldCounter == 1 && w.connectionCounter == 0 {
 			// Form 1 to 0.
-			w.hookStream(webrtc.ICEConnectionStateDisconnected)
-		} else if oldCounter == 0 && newCounter == 1 {
+			w.updateCounter(-1)
+		} else if oldCounter == 0 && w.connectionCounter == 1 {
 			// Register session after ICE state is connected.
 			w.registerSession()
 			// From 0 to 1.
-			w.hookStream(webrtc.ICEConnectionStateConnected)
+			w.updateCounter(1)
 		}
 	})
 
@@ -325,3 +327,6 @@ func NoopRegisterSessionFunc() {}
 
 // NoopHookStreamFunc does nothing.
 func NoopHookStreamFunc(_ webrtc.ICEConnectionState) {}
+
+// NoopUpdateCounterFunc does nothing.
+func NoopUpdateCounterFunc(_ int) {}

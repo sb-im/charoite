@@ -29,6 +29,8 @@ type Subscriber struct {
 	// sessions must be created before used by publisher and is shared between publishers ans subscribers.
 	// It's only read by subscriber.
 	sessions *sync.Map
+
+	counter map[string]int
 }
 
 // incomingMessage is a generic WebSocket incoming message.
@@ -58,6 +60,7 @@ func New(
 		sessions: sessions,
 		config:   config,
 		logger:   l,
+		counter:  make(map[string]int),
 	}
 }
 
@@ -148,7 +151,7 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 				sendCandidate(ctx, c, offer.Meta),
 				recvCandidate(candidateChan[offer.Meta.TrackSource]),
 				webrtcx.NoopRegisterSessionFunc,
-				s.hookStream(offer.Meta),
+				s.updateCounter(offer.Meta),
 			)
 
 			var sdp webrtc.SessionDescription
@@ -222,20 +225,34 @@ func (s *Subscriber) processMessage(ctx context.Context, c *websocket.Conn) {
 	}
 }
 
-// hookStream only signal to drone and deport track source.
-func (s *Subscriber) hookStream(meta *pb.Meta) webrtcx.HookStreamFunc {
-	return func(iceConnectionStat webrtc.ICEConnectionState) {
-		topic := s.config.HookStreamTopicPrefix + "/" + meta.Id + "/" + strconv.Itoa(int(meta.TrackSource))
-		t := s.client.Publish(topic, byte(s.config.Qos), s.config.Retained, strconv.Itoa(int(iceConnectionStat)))
-		// Handle the token in a go routine so this loop keeps sending messages regardless of delivery status
-		go func() {
-			<-t.Done()
-			if t.Error() != nil {
-				s.logger.Err(t.Error()).Msgf("could not publish to %s", topic)
-			} else {
-				s.logger.Info().Str("topic", topic).Str("stat", iceConnectionStat.String()).Msg("Sent hook signal")
-			}
-		}()
+func (s *Subscriber) notifySubscriptions(meta *pb.Meta, subscriptions int) {
+	topic := s.config.NotifyStreamTopicPrefix + "/" + meta.Id + "/" + strconv.Itoa(int(meta.TrackSource))
+	t := s.client.Publish(topic, byte(s.config.Qos), s.config.Retained, strconv.Itoa(subscriptions))
+	go func() {
+		<-t.Done()
+		if t.Error() != nil {
+			s.logger.Err(t.Error()).Msgf("could not publish to %s", topic)
+		} else {
+			s.logger.Info().Str("topic", topic).Int("subscriptions", subscriptions).Msg("Sent client subscriptions number")
+		}
+	}()
+}
+
+func (s *Subscriber) updateCounter(meta *pb.Meta) webrtcx.UpdateCounterFunc {
+	return func(n int) {
+		key := meta.Id + "/" + strconv.Itoa(int(meta.TrackSource))
+
+		var val int
+
+		v, ok := s.counter[key]
+		if ok {
+			val = v + n
+		} else {
+			val = n
+		}
+
+		s.counter[key] = val
+		s.notifySubscriptions(meta, val)
 	}
 }
 
