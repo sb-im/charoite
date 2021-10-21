@@ -38,6 +38,9 @@ type publisher struct {
 	pendingCandidates []*webrtc.ICECandidate
 	candidatesMux     sync.Mutex
 
+	isLivestreamStarted bool
+	stateMux            sync.Mutex
+
 	logger zerolog.Logger
 }
 
@@ -199,6 +202,12 @@ func (p *publisher) handleICEConnectionStateChange(peerConnection *webrtc.PeerCo
 				break
 			}
 		}
+
+		if connectionState == webrtc.ICEConnectionStateDisconnected {
+			p.stateMux.Lock()
+			p.isLivestreamStarted = false
+			p.candidatesMux.Unlock()
+		}
 	}
 }
 
@@ -291,13 +300,9 @@ func (p *publisher) listenSubscriber(videoTrack webrtc.TrackLocal) <-chan error 
 	errChan := make(chan error, 1)
 	topic := p.config.NotifyStreamTopicPrefix + "/" + p.meta.Id + "/" + strconv.Itoa(int(p.meta.TrackSource))
 
-	// started marks whether livestream is started.
-	var started bool
-	var mux sync.Mutex
-
 	p.client.Subscribe(topic, byte(p.config.Qos), func(_ mqtt.Client, m mqtt.Message) {
-		mux.Lock()
-		defer mux.Unlock()
+		p.stateMux.Lock()
+		defer p.stateMux.Unlock()
 
 		counter, err := strconv.Atoi(string(m.Payload()))
 		if err != nil {
@@ -311,12 +316,12 @@ func (p *publisher) listenSubscriber(videoTrack webrtc.TrackLocal) <-chan error 
 			p.logger.Info().Msg("cancel living stream now")
 
 			ctx, cancel = context.WithCancel(context.Background())
-			started = false
+			p.isLivestreamStarted = false
 
 			return
 		}
 
-		if started {
+		if p.isLivestreamStarted {
 			p.logger.Debug().Msg("live stream was already started")
 			return
 		}
@@ -331,7 +336,7 @@ func (p *publisher) listenSubscriber(videoTrack webrtc.TrackLocal) <-chan error 
 		}()
 		p.logger.Info().Msg("start living stream now")
 
-		started = true
+		p.isLivestreamStarted = true
 	})
 
 	return errChan
