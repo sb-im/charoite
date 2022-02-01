@@ -73,8 +73,3 @@ addr = "rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov"
 # protocol = "rtp"
 # host = "0.0.0.0"
 # port = 5005 # use a different port from drone stream source port
-
-# This option is for livestream.
-[hook_stream]
-service = "sbcameradronemulti.service"
-wait_timeout = "3s"
