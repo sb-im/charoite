@@ -1,8 +1,3 @@
-# SSH private key set up.
-CURRENT_USER ?= $(shell whoami)
-PRIVATE_KEY_FILE ?= id_ed25519
-PRIVATE_KEY_PATH ?= github=${HOME}/.ssh/$(PRIVATE_KEY_FILE)
-
 # Enable docker buildkit.
 DOCKER_BUILDKIT = 1
 # Project image repo.
@@ -55,7 +50,6 @@ image:
 	@docker build \
 	--build-arg DEBUG=$(DEBUG) \
 	--build-arg BUILD_TAGS=$(BUILD_TAGS) \
-	--ssh $(PRIVATE_KEY_PATH) \
 	-t $(IMAGE_REPO):$(IMAGE_TAG)-$(BUILD_TAGS) \
 	.
 
