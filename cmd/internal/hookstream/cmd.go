@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/SB-IM/charoite/internal/hookstream"
-	mqttclient "github.com/SB-IM/mqtt-client"
+	"github.com/SB-IM/charoite/pkg/mqttclient"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"

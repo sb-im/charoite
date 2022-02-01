@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	mqttclient "github.com/SB-IM/mqtt-client"
+	"github.com/SB-IM/charoite/pkg/mqttclient"
 	pb "github.com/SB-IM/pb/signal"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/pion/webrtc/v3"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"strconv"
 
-	mqttclient "github.com/SB-IM/mqtt-client"
+	"github.com/SB-IM/charoite/pkg/mqttclient"
 	pb "github.com/SB-IM/pb/signal"
 	"github.com/rs/zerolog/log"
 )
