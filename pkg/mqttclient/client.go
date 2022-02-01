@@ -1,5 +1,5 @@
 // mqtt_client is an highly customized mqtt client build upon github.com/eclipse/paho.mqtt.golang.
-// There are several diffrent client options for subscriber clients and publisher clients.
+// There are several different client options for subscriber clients and publisher clients.
 // Mainly, `opts.OnConnect`, `CleanSession` and `client.AddRoute` for subscribers.
 package mqttclient
 
@@ -72,7 +72,7 @@ func NewClient(ctx context.Context, config ConfigOptions) mqtt.Client {
 	opts.AddBroker(config.Server)
 	opts.SetClientID(config.ClientID + "-" + uuid.NewString())
 
-	// Official suggestion: Unless ordered delivery of messages is essential (and you have configured your broker to support this e.g. max_inflight_messages=1 in mosquitto) then set ClientOptions.SetOrderMatters(false). Doing so will avoid the below issue (deadlocks due to blocking message handlers).
+	// Official suggestion: Unless ordered delivery of messages is essential (and you have configured your broker to support this e.g. max_inflight_messages=1 in mosquito) then set ClientOptions.SetOrderMatters(false). Doing so will avoid the below issue (deadlocks due to blocking message handlers).
 	opts.SetOrderMatters(false)
 	opts.SetCleanSession(false)
 	opts.SetUsername(config.Username)

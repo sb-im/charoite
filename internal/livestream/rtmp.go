@@ -128,7 +128,7 @@ func (h *handler) OnVideo(timestamp uint32, payload io.Reader) error {
 			outBuf = append(outBuf, annexBPrefix()...)
 			outBuf = append(outBuf, videoBuffer[offset:offset+bufferLength]...)
 
-			offset += int(bufferLength)
+			offset += bufferLength
 		}
 	case flvtag.AVCPacketTypeSequenceHeader:
 		const spsCountOffset = 5
