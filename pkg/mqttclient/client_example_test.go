@@ -10,7 +10,7 @@ import (
 )
 
 func ExampleMQTTClient() {
-	logging.SetDebugMod(true)
+	logging.Debug(true)
 
 	if err := os.Setenv("DEBUG_MQTT_CLIENT", "true"); err != nil {
 		log.Fatal().Err(err)
