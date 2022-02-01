@@ -3,7 +3,6 @@ module github.com/SB-IM/charoite
 go 1.17
 
 require (
-	github.com/SB-IM/logging v0.2.5
 	github.com/SB-IM/mqtt-client v0.1.5
 	github.com/SB-IM/pb v0.3.1
 	github.com/deepch/vdk v0.0.0-20211113104208-022deeb641f7
@@ -17,6 +16,7 @@ require (
 	github.com/rs/zerolog v1.26.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/urfave/cli/v2 v2.3.0
+	github.com/williamlsh/logging v0.1.1
 	github.com/yutopp/go-flv v0.2.0
 	github.com/yutopp/go-rtmp v0.0.2-0.20210218160027-ece21675a185
 	google.golang.org/protobuf v1.27.1

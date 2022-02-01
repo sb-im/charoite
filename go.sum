@@ -1,9 +1,8 @@
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/toml v1.0.0 h1:dtDWrepsVPfW9H/4y7dDgFc2MBUSeJhlaDtK13CxFlU=
 github.com/BurntSushi/toml v1.0.0/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
+github.com/SB-IM/logging v0.2.3 h1:RFPaTQcCoxy6rHC5vJqhLH5eA6eKH6QyQ21DtOo/Zec=
 github.com/SB-IM/logging v0.2.3/go.mod h1:BW58uI1i1sn7HLSqAc28lMXFMGXmHSAgqFpCxJI72i0=
-github.com/SB-IM/logging v0.2.5 h1:lKx/EHgsfpJG2SSP9VwQLwRtv5w3Nz3WtmCxKqeLILc=
-github.com/SB-IM/logging v0.2.5/go.mod h1:QE0jvtyGEF3+rZECN5BfqOif+E62BJZ5jJiVBW25III=
 github.com/SB-IM/mqtt-client v0.1.5 h1:XPHyAmTSOSCWhdjFlt42EwC3QZmioinxuhsvwn8WToA=
 github.com/SB-IM/mqtt-client v0.1.5/go.mod h1:ECYIygl1GJorX6Mlj8KyVc4diXyC0P30EerAz54tL9g=
 github.com/SB-IM/pb v0.3.1 h1:CgSdrOi8kiX15J7Wx+n/jcnyi2gu9fx7ySWt8QrQ1G4=
@@ -198,6 +197,7 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/rs/xid v1.2.1/go.mod h1:+uKXf+4Djp6Md1KODXJxgGQPKngRmWyn10oCKFzNHOQ=
 github.com/rs/xid v1.3.0/go.mod h1:trrq9SKmegXys3aeAKXMUTdJsYXVwGY3RLcfgqegfbg=
 github.com/rs/zerolog v1.23.0/go.mod h1:6c7hFfxPOy7TacJc4Fcdi24/J0NKYGzjG8FWRI916Qo=
+github.com/rs/zerolog v1.26.0/go.mod h1:yBiM87lvSqX8h0Ww4sdzNSkVYZ8dL2xjZJG1lAuGZEo=
 github.com/rs/zerolog v1.26.1 h1:/ihwxqH+4z8UxyI70wM1z9yCvkWcfz/a3mj48k/Zngc=
 github.com/rs/zerolog v1.26.1/go.mod h1:/wSSJWX7lVrsOwlbyTRSOJvqRlc+WjWlfes+CiJ+tmc=
 github.com/russross/blackfriday/v2 v2.0.1/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
@@ -222,6 +222,8 @@ github.com/ugorji/go/codec v1.1.7 h1:2SvQaVZ1ouYrrKKwoSk2pzd4A9evlKJb9oTL+OaLUSs
 github.com/ugorji/go/codec v1.1.7/go.mod h1:Ax+UKWsSmolVDwsd+7N3ZtXu+yMGCf907BLYF3GoBXY=
 github.com/urfave/cli/v2 v2.3.0 h1:qph92Y649prgesehzOrQjdWyxFOp/QVM+6imKHad91M=
 github.com/urfave/cli/v2 v2.3.0/go.mod h1:LJmUH05zAU44vOAcrfzZQKsZbVcdbOG8rtL3/XcUArI=
+github.com/williamlsh/logging v0.1.1 h1:Z/bkNGbR1vGpvW59pk8WQ6w754BYpuktrE7nOLRzA3Y=
+github.com/williamlsh/logging v0.1.1/go.mod h1:mZ92SnmnHFwLFtyU2j6YnvYcqzDFOp8CfAUpre8lr5Y=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.4.0/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/yutopp/go-amf0 v0.0.0-20180803120851-48851794bb1f h1:VIlyzrDymNB/eD+uJ2vdhgxsY1OGKpVSvVPV3oy97cI=

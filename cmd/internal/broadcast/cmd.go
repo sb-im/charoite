@@ -4,13 +4,13 @@ import (
 	"context"
 	"time"
 
-	"github.com/SB-IM/logging"
 	mqttclient "github.com/SB-IM/mqtt-client"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
+	"github.com/williamlsh/logging"
 
 	"github.com/SB-IM/charoite/internal/broadcast"
 	"github.com/SB-IM/charoite/internal/broadcast/cfg"

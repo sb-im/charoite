@@ -5,12 +5,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/SB-IM/logging"
 	"github.com/SB-IM/charoite/internal/turn"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
+	"github.com/williamlsh/logging"
 )
 
 const configFlagName = "config"
