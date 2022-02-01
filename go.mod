@@ -3,7 +3,7 @@ module github.com/SB-IM/charoite
 go 1.17
 
 require (
-	github.com/deepch/vdk v0.0.0-20211113104208-022deeb641f7
+	github.com/deepch/vdk v0.0.0-20220127011006-13fad59f2c2f
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
@@ -11,7 +11,7 @@ require (
 	github.com/pion/randutil v0.1.0
 	github.com/pion/rtcp v1.2.9
 	github.com/pion/turn/v2 v2.0.6
-	github.com/pion/webrtc/v3 v3.1.16
+	github.com/pion/webrtc/v3 v3.1.19
 	github.com/rs/zerolog v1.26.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/urfave/cli/v2 v2.3.0
@@ -28,12 +28,12 @@ require (
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/klauspost/compress v1.14.1 // indirect
+	github.com/klauspost/compress v1.14.2 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/pion/datachannel v1.5.2 // indirect
-	github.com/pion/dtls/v2 v2.1.0 // indirect
-	github.com/pion/ice/v2 v2.1.18 // indirect
-	github.com/pion/interceptor v0.1.5 // indirect
+	github.com/pion/dtls/v2 v2.1.1 // indirect
+	github.com/pion/ice/v2 v2.1.20 // indirect
+	github.com/pion/interceptor v0.1.7 // indirect
 	github.com/pion/mdns v0.0.5 // indirect
 	github.com/pion/rtp v1.7.4 // indirect
 	github.com/pion/sctp v1.8.2 // indirect
@@ -45,9 +45,9 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/yutopp/go-amf0 v0.0.0-20180803120851-48851794bb1f // indirect
-	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce // indirect
-	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d // indirect
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/crypto v0.0.0-20220131195533-30dcbda58838 // indirect
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
+	golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
