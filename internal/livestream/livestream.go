@@ -4,8 +4,8 @@ import (
 	"context"
 	"strconv"
 
+	pb "github.com/SB-IM/charoite/internal/pb/signal"
 	"github.com/SB-IM/charoite/pkg/mqttclient"
-	pb "github.com/SB-IM/pb/signal"
 	"github.com/rs/zerolog/log"
 )
 

@@ -3,7 +3,6 @@ module github.com/SB-IM/charoite
 go 1.17
 
 require (
-	github.com/SB-IM/pb v0.3.1
 	github.com/deepch/vdk v0.0.0-20211113104208-022deeb641f7
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/google/uuid v1.3.0

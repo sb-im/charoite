@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	pb "github.com/SB-IM/charoite/internal/pb/signal"
 	"github.com/SB-IM/charoite/pkg/mqttclient"
-	pb "github.com/SB-IM/pb/signal"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/pion/webrtc/v3"
 	"github.com/rs/zerolog/log"

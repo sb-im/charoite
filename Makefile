@@ -70,3 +70,7 @@ down:
 .PHONY: clean
 clean:
 	@rm -rf charoite
+
+.PHONY: pb
+pb:
+	@cd internal/pb/signal && ./protogen.sh

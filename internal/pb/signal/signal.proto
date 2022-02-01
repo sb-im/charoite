@@ -1,0 +1,25 @@
+syntax = "proto3";
+package pb;
+
+option go_package = "github.com/SB-IM/pb/signal";
+
+message SessionDescription {
+  Meta meta = 1; // Metadata to identify actor if any
+  string sdp = 2; // JSON encoded webrtc.SessionDescription
+}
+
+message ICECandidate {
+  Meta meta = 1; // Metadata to identify actor if any
+  string candidate = 2; // JSON encoded webrtc.ICECandidate.
+}
+
+message Meta {
+  string id = 1; // Unique machine ID for edge device.
+  TrackSource track_source = 2;
+}
+
+enum TrackSource {
+  UNKNOWN = 0;
+  DRONE = 1;
+  MONITOR = 2;
+}

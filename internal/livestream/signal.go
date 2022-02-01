@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	pb "github.com/SB-IM/pb/signal"
+	pb "github.com/SB-IM/charoite/internal/pb/signal"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/pion/webrtc/v3"
 )

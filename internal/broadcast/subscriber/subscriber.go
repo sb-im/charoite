@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"sync"
 
-	pb "github.com/SB-IM/pb/signal"
+	pb "github.com/SB-IM/charoite/internal/pb/signal"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gorilla/mux"
 	"github.com/pion/webrtc/v3"
