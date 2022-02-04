@@ -11,7 +11,7 @@ require (
 	github.com/pion/randutil v0.1.0
 	github.com/pion/rtcp v1.2.9
 	github.com/pion/turn/v2 v2.0.6
-	github.com/pion/webrtc/v3 v3.1.19
+	github.com/pion/webrtc/v3 v3.1.21
 	github.com/rs/zerolog v1.26.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/urfave/cli/v2 v2.3.0
