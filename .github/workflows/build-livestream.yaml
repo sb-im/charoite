@@ -33,12 +33,9 @@ jobs:
           registry: ghcr.io
           username: ${{ secrets.CONTAINER_USER }}
           password: ${{ secrets.CONTAINER_TOKEN }}
-      - name: Prepare ssh key
-        run: echo "${{ secrets.SSH_KEY }}" > ssh-key
       - name: Build and push livestream
         uses: docker/build-push-action@v2
         with:
-          ssh: github=ssh-key
           context: .
           platforms: linux/amd64,linux/arm64
           build-args: |
