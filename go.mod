@@ -10,7 +10,7 @@ require (
 	github.com/pion/logging v0.2.2
 	github.com/pion/randutil v0.1.0
 	github.com/pion/rtcp v1.2.9
-	github.com/pion/turn/v2 v2.0.6
+	github.com/pion/turn/v2 v2.0.7
 	github.com/pion/webrtc/v3 v3.1.23
 	github.com/rs/zerolog v1.26.1
 	github.com/sirupsen/logrus v1.8.1
