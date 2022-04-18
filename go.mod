@@ -11,7 +11,7 @@ require (
 	github.com/pion/randutil v0.1.0
 	github.com/pion/rtcp v1.2.9
 	github.com/pion/turn/v2 v2.0.8
-	github.com/pion/webrtc/v3 v3.1.28
+	github.com/pion/webrtc/v3 v3.1.29
 	github.com/rs/zerolog v1.26.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/urfave/cli/v2 v2.4.0
@@ -35,7 +35,7 @@ require (
 	github.com/pion/ice/v2 v2.2.3 // indirect
 	github.com/pion/interceptor v0.1.10 // indirect
 	github.com/pion/mdns v0.0.5 // indirect
-	github.com/pion/rtp v1.7.12 // indirect
+	github.com/pion/rtp v1.7.13 // indirect
 	github.com/pion/sctp v1.8.2 // indirect
 	github.com/pion/sdp/v3 v3.0.4 // indirect
 	github.com/pion/srtp/v2 v2.0.5 // indirect
