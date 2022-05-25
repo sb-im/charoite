@@ -14,7 +14,7 @@ require (
 	github.com/pion/webrtc/v3 v3.1.41
 	github.com/rs/zerolog v1.26.1
 	github.com/sirupsen/logrus v1.8.1
-	github.com/urfave/cli/v2 v2.8.0
+	github.com/urfave/cli/v2 v2.8.1
 	github.com/williamlsh/logging v0.1.1
 	github.com/yutopp/go-flv v0.2.0
 	github.com/yutopp/go-rtmp v0.0.2-0.20210218160027-ece21675a185
@@ -24,7 +24,6 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.1.0 // indirect
-	github.com/antzucaro/matchr v0.0.0-20210222213004-b04723ef80f0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -45,6 +44,7 @@ require (
 	github.com/pion/udp v0.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	github.com/yutopp/go-amf0 v0.0.0-20180803120851-48851794bb1f // indirect
 	golang.org/x/crypto v0.0.0-20220516162934-403b01795ae8 // indirect
 	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
