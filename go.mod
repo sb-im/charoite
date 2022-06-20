@@ -14,7 +14,7 @@ require (
 	github.com/pion/webrtc/v3 v3.1.41
 	github.com/rs/zerolog v1.27.0
 	github.com/sirupsen/logrus v1.8.1
-	github.com/urfave/cli/v2 v2.8.1
+	github.com/urfave/cli/v2 v2.10.1
 	github.com/williamlsh/logging v0.1.1
 	github.com/yutopp/go-flv v0.2.0
 	github.com/yutopp/go-rtmp v0.0.2-0.20210218160027-ece21675a185
@@ -52,5 +52,5 @@ require (
 	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
