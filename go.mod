@@ -13,7 +13,7 @@ require (
 	github.com/pion/turn/v2 v2.0.8
 	github.com/pion/webrtc/v3 v3.1.43
 	github.com/rs/zerolog v1.27.0
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.0
 	github.com/urfave/cli/v2 v2.11.0
 	github.com/williamlsh/logging v0.1.1
 	github.com/yutopp/go-flv v0.2.0
@@ -51,6 +51,6 @@ require (
 	golang.org/x/crypto v0.0.0-20220516162934-403b01795ae8 // indirect
 	golang.org/x/net v0.0.0-20220630215102-69896b714898 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20220622161953-175b2fd9d664 // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
