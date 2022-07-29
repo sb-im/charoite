@@ -18,7 +18,7 @@ require (
 	github.com/williamlsh/logging v0.1.1
 	github.com/yutopp/go-flv v0.2.0
 	github.com/yutopp/go-rtmp v0.0.2-0.20210218160027-ece21675a185
-	google.golang.org/protobuf v1.28.0
+	google.golang.org/protobuf v1.28.1
 	nhooyr.io/websocket v1.8.7
 )
 
