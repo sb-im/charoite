@@ -1,6 +1,6 @@
 module github.com/SB-IM/charoite
 
-go 1.17
+go 1.19
 
 require (
 	github.com/deepch/vdk v0.0.0-20220127011006-13fad59f2c2f
