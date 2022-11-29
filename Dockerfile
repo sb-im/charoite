@@ -1,4 +1,4 @@
-FROM golang:1.17-alpine AS builder
+FROM golang:1.19-alpine AS builder
 
 # See: https://docs.github.com/en/packages/guides/connecting-a-repository-to-a-container-image#connecting-a-repository-to-a-container-image-on-the-command-line
 LABEL org.opencontainers.image.source=https://github.com/SB-IM/charoite
