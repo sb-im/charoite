@@ -3,7 +3,7 @@ module github.com/SB-IM/charoite
 go 1.19
 
 require (
-	github.com/deepch/vdk v0.0.0-20220127011006-13fad59f2c2f
+	github.com/deepch/vdk v0.0.19
 	github.com/eclipse/paho.mqtt.golang v1.4.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
