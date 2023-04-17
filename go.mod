@@ -11,7 +11,7 @@ require (
 	github.com/pion/randutil v0.1.0
 	github.com/pion/rtcp v1.2.10
 	github.com/pion/turn/v2 v2.1.0
-	github.com/pion/webrtc/v3 v3.1.59
+	github.com/pion/webrtc/v3 v3.1.60
 	github.com/rs/zerolog v1.29.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/urfave/cli/v2 v2.25.1
@@ -50,7 +50,7 @@ require (
 	github.com/yutopp/go-amf0 v0.0.0-20180803120851-48851794bb1f // indirect
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
+	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
