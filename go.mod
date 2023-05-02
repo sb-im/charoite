@@ -14,7 +14,7 @@ require (
 	github.com/pion/webrtc/v3 v3.2.1
 	github.com/rs/zerolog v1.29.1
 	github.com/sirupsen/logrus v1.9.0
-	github.com/urfave/cli/v2 v2.25.2
+	github.com/urfave/cli/v2 v2.25.3
 	github.com/williamlsh/logging v0.1.1
 	github.com/yutopp/go-flv v0.3.0
 	github.com/yutopp/go-rtmp v0.0.4
