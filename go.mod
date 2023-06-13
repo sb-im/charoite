@@ -14,7 +14,7 @@ require (
 	github.com/pion/webrtc/v3 v3.2.10
 	github.com/rs/zerolog v1.29.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/urfave/cli/v2 v2.25.5
+	github.com/urfave/cli/v2 v2.25.6
 	github.com/williamlsh/logging v0.1.1
 	github.com/yutopp/go-flv v0.3.0
 	github.com/yutopp/go-rtmp v0.0.4
@@ -23,7 +23,7 @@ require (
 )
 
 require (
-	github.com/BurntSushi/toml v1.2.1 // indirect
+	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
