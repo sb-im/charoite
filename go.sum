@@ -183,8 +183,8 @@ github.com/yutopp/go-amf0 v0.0.0-20180803120851-48851794bb1f/go.mod h1:miopb3mUO
 github.com/yutopp/go-amf0 v0.1.0 h1:a3UeBZG7nRF0zfvmPn2iAfNo1RGzUpHz1VyJD2oGrik=
 github.com/yutopp/go-amf0 v0.1.0/go.mod h1:QzDOBr9RV6sQh6E5GFEJROZbU0iQKijORBmprkb3FIk=
 github.com/yutopp/go-flv v0.2.0/go.mod h1:xe1MPrWcfQfYeBT7E5WAF0zvKUyf1hmSpesDjBoUV4E=
-github.com/yutopp/go-flv v0.3.0 h1:zkjsXqxfkwnrtPNvicxCKkaJnvwzf7kOfL/OUERP6LQ=
-github.com/yutopp/go-flv v0.3.0/go.mod h1:pAlHPSVRMv5aCUKmGOS/dZn/ooTgnc09qOPmiUNMubs=
+github.com/yutopp/go-flv v0.3.1 h1:4ILK6OgCJgUNm2WOjaucWM5lUHE0+sLNPdjq3L0Xtjk=
+github.com/yutopp/go-flv v0.3.1/go.mod h1:pAlHPSVRMv5aCUKmGOS/dZn/ooTgnc09qOPmiUNMubs=
 github.com/yutopp/go-rtmp v0.0.4 h1:zMnb4YflIi5x9ThvnIjo9FsaUtfh5lzySjGJyXO1qqA=
 github.com/yutopp/go-rtmp v0.0.4/go.mod h1:JOa0EiIhwVeDrDGYQT4dlfAHslOhKuNP4nluYqTDF6w=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
