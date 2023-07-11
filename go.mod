@@ -11,7 +11,7 @@ require (
 	github.com/pion/randutil v0.1.0
 	github.com/pion/rtcp v1.2.10
 	github.com/pion/turn/v2 v2.1.2
-	github.com/pion/webrtc/v3 v3.2.11
+	github.com/pion/webrtc/v3 v3.2.12
 	github.com/rs/zerolog v1.29.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli/v2 v2.25.7
@@ -35,7 +35,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/pion/datachannel v1.5.5 // indirect
 	github.com/pion/dtls/v2 v2.2.7 // indirect
-	github.com/pion/ice/v2 v2.3.8 // indirect
+	github.com/pion/ice/v2 v2.3.9 // indirect
 	github.com/pion/interceptor v0.1.17 // indirect
 	github.com/pion/mdns v0.0.7 // indirect
 	github.com/pion/rtp v1.7.13 // indirect
@@ -50,9 +50,9 @@ require (
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	github.com/yutopp/go-amf0 v0.1.0 // indirect
-	golang.org/x/crypto v0.9.0 // indirect
-	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/crypto v0.10.0 // indirect
+	golang.org/x/net v0.11.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/sys v0.9.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
