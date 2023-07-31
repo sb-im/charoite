@@ -12,7 +12,7 @@ require (
 	github.com/pion/rtcp v1.2.10
 	github.com/pion/turn/v2 v2.1.3
 	github.com/pion/webrtc/v3 v3.2.13
-	github.com/rs/zerolog v1.29.1
+	github.com/rs/zerolog v1.30.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/urfave/cli/v2 v2.25.7
 	github.com/williamlsh/logging v0.1.1
