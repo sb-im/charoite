@@ -6,7 +6,7 @@ require (
 	github.com/deepch/vdk v0.0.20
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/google/uuid v1.4.0
-	github.com/gorilla/mux v1.8.0
+	github.com/gorilla/mux v1.8.1
 	github.com/pion/logging v0.2.2
 	github.com/pion/randutil v0.1.0
 	github.com/pion/rtcp v1.2.10
