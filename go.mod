@@ -9,7 +9,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/pion/logging v0.2.2
 	github.com/pion/randutil v0.1.0
-	github.com/pion/rtcp v1.2.12
+	github.com/pion/rtcp v1.2.13
 	github.com/pion/turn/v2 v2.1.4
 	github.com/pion/webrtc/v3 v3.2.23
 	github.com/rs/zerolog v1.31.0
