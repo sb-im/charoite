@@ -17,7 +17,7 @@ require (
 	github.com/urfave/cli/v2 v2.27.2
 	github.com/williamlsh/logging v0.1.1
 	github.com/yutopp/go-flv v0.3.1
-	github.com/yutopp/go-rtmp v0.0.6
+	github.com/yutopp/go-rtmp v0.0.7
 	google.golang.org/protobuf v1.34.2
 	nhooyr.io/websocket v1.8.11
 )
