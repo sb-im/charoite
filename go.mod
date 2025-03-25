@@ -1,6 +1,7 @@
 module github.com/SB-IM/charoite
 
 go 1.19
+toolchain go1.24.1
 
 require (
 	github.com/deepch/vdk v0.0.27
@@ -18,7 +19,7 @@ require (
 	github.com/williamlsh/logging v0.1.1
 	github.com/yutopp/go-flv v0.3.1
 	github.com/yutopp/go-rtmp v0.0.7
-	google.golang.org/protobuf v1.36.4
+	google.golang.org/protobuf v1.36.6
 	nhooyr.io/websocket v1.8.17
 )
 
